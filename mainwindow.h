@@ -4,11 +4,15 @@
 #include <QMainWindow>
 #include <QStringList>
 #include <QTreeWidgetItem>
-#include "user_serial.h"
+#include <QStringList>
+#include <QDebug>
+
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
 QT_END_NAMESPACE
+
+#include "user_serial.h"
 
 class MainWindow : public QMainWindow
 {
@@ -22,6 +26,9 @@ private:
     Ui::MainWindow *ui;
 
 public:
-    UserSerial user_serial;
+private:
+    User_serial user_serial;
+    void mainwindow_update_serial_port(void);
+
 };
 #endif // MAINWINDOW_H
