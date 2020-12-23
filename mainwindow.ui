@@ -30,7 +30,7 @@
      <bool>false</bool>
     </property>
     <property name="columnCount">
-     <number>3</number>
+     <number>0</number>
     </property>
     <attribute name="headerCascadingSectionResizes">
      <bool>false</bool>
@@ -38,35 +38,6 @@
     <attribute name="headerMinimumSectionSize">
      <number>25</number>
     </attribute>
-    <column>
-     <property name="text">
-      <string notr="true">是否有效/描述</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>接收数据</string>
-     </property>
-    </column>
-    <column>
-     <property name="text">
-      <string>应答数据</string>
-     </property>
-    </column>
-    <item>
-     <property name="text">
-      <string>描述</string>
-     </property>
-     <property name="checkState">
-      <enum>Unchecked</enum>
-     </property>
-     <property name="text">
-      <string>01 02</string>
-     </property>
-     <property name="text">
-      <string>03 04</string>
-     </property>
-    </item>
    </widget>
    <widget class="QPushButton" name="pushButton_add">
     <property name="geometry">
@@ -157,6 +128,13 @@
             <widget class="QPushButton" name="button_clear">
              <property name="text">
               <string>清除接收区</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="button_send">
+             <property name="text">
+              <string>发送</string>
              </property>
             </widget>
            </item>

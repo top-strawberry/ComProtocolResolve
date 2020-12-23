@@ -19,14 +19,17 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    user_dialog.cpp \
     user_serial.cpp
 
 HEADERS += \
     mainwindow.h \
+    user_dialog.h \
     user_serial.h
 
 FORMS += \
-    mainwindow.ui
+    mainwindow.ui \
+    user_dialog.ui
 
 TRANSLATIONS += \
     Q_ComProtocolResolve_zh_CN.ts
