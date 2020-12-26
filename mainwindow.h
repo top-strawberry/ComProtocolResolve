@@ -28,8 +28,8 @@ public:
     ~MainWindow();
 
 public:  //声明静态成员函数
-    static int HexStrToByte(const char *source, char *dest, int sourceLen);
-    static int ByteToHexStr(const unsigned char *source, char *dest, int sourceLen);
+    static int HexStrToByte(const char *source, char *dest, quint32 sourceLen);
+    static int ByteToHexStr(const unsigned char *source, char *dest, quint32 sourceLen);
 
 private:
     Ui::MainWindow *ui;

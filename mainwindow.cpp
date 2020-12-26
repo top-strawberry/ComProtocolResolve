@@ -44,9 +44,9 @@ MainWindow::~MainWindow()
 }
 
 //十六进制字符串转换为字节流
-int MainWindow::HexStrToByte(const char *source, char *dest, int sourceLen)
+int MainWindow::HexStrToByte(const char *source, char *dest, quint32 sourceLen)
 {
-    quint8 i,j=0;
+    quint32 i,j=0;
     QString c;
     quint8 highByte, lowByte;
 
@@ -106,10 +106,10 @@ int MainWindow::HexStrToByte(const char *source, char *dest, int sourceLen)
 }
 
 //字节流转换为十六进制字符串
-int MainWindow::ByteToHexStr(const unsigned char *source, char *dest, int sourceLen)
+int MainWindow::ByteToHexStr(const unsigned char *source, char *dest, quint32 sourceLen)
 {
-    short i;
-    unsigned char highByte = 0, lowByte = 0;
+    quint32 i;
+    quint8 highByte = 0, lowByte = 0;
 
     for (i = 0; i < sourceLen; i++) {
         highByte = source[i] >> 4;
@@ -155,7 +155,7 @@ void MainWindow::mainwindow_dis_rxd_or_txd(QString dis_type, QByteArray disp_buf
     QString str;
     QDateTime time;
 
-    str = this->ui->textBrowser->toPlainText();
+    str = this->ui->textBrowser->toPlainText();    
     time = QDateTime::currentDateTime();          //获取系统现在的时间
     str += time.toString("yyyy-MM-dd hh:mm:ss ddd") + dis_type + QString("%1").arg(disp_buf.size()) + "\r\n";         //设置显示格式
     str += tr(disp_buf);
@@ -251,13 +251,13 @@ void MainWindow::on_button_send_clicked()
     qDebug() << "item_count:" << item_count;
     for (i = 0; i < item_count; i ++) {
         QTreeWidgetItem * item = this->ui->treeWidget->topLevelItem(i);
-        if(item->checkState(0) == Qt::Checked){
+        if(item->checkState(0) == Qt::Checked) {
             output_str = item->text(2);
             qDebug() << output_str.toLatin1().data();
             if(item->checkState(2) == Qt::Checked){//十六进制字符串，转成十六进制再发送
                 int data_len = 0;
                 QByteArray byteArry = output_str.toLatin1();
-                char *dest = (char *)calloc(byteArry.size() + 2, sizeof (char));
+                char *dest = (char *)calloc(byteArry.size() * 2 + 2, sizeof (char));
                 if(dest ==NULL){
                     qDebug() << "error: calloc dest";
                     break;
@@ -273,8 +273,8 @@ void MainWindow::on_button_send_clicked()
             }else{
                 this->user_serial.user_serial_wirte(output_str.toLatin1().data(), output_str.size());
             }
+            QThread::sleep(1);
         }
-        QThread::sleep(1);
     }
 }
 
@@ -292,12 +292,10 @@ void MainWindow::mainwindow_readData_slot()
     QTreeWidgetItem * item = NULL;
     int data_len = 0;
     char * dest = NULL;
-
     bool a_send = false;
     char * send_buf = NULL;
     int send_len = 0;
     bool is_hex = false;
-
 
     QTreeWidgetItemIterator it(ui->treeWidget);
     if(this->user_serial_isopen == false){
@@ -318,7 +316,7 @@ void MainWindow::mainwindow_readData_slot()
             qDebug() << "接收数据:" << byteArry << "size:" << byteArry.size();
             if(item->checkState(1) == Qt::Checked) {//十六进制字符串，转成十六进制再比较
                 data_len = 0;
-                dest = (char *)calloc(byteArry.size() * 2 + 2, sizeof (char));
+                dest = (char *)calloc(recv_buf.size() * 2 + 2, sizeof (char));
                 if(dest ==NULL){
                     qDebug() << "error: calloc dest";
                     break;
@@ -342,17 +340,23 @@ void MainWindow::mainwindow_readData_slot()
                 }
                 qDebug() << "\r\n";
 
-                if((data_len > 0)){
+                if((data_len > 0)) {
                     if(memcmp(recv_buf, dest, recv_buf.size()) == 0) {
-                        if(item->checkState(2) == Qt::Checked){//应答数据使用十六进制发送
-                            byteArry.clear();
-                            byteArry = item->text(2).toLatin1();
-                            memset(dest, 0, data_len);
+                        byteArry.clear();
+                        byteArry = item->text(2).toLatin1();
+                        if(item->checkState(2) == Qt::Checked) {//应答数据使用十六进制发送
+                            if(dest) {
+                                free(dest);
+                                dest = NULL;
+                            }
+                            dest = (char *)calloc(byteArry.size() * 2 + 2, sizeof (char));
+                            if(dest ==NULL){
+                                qDebug() << "error: calloc dest";
+                                break;
+                            }
+
                             data_len = MainWindow::HexStrToByte(byteArry.data(), dest, byteArry.size());
                             if((data_len > 0)) {
-                                byteArry.clear();
-                                byteArry = item->text(2).toLatin1();
-                                data_len = MainWindow::HexStrToByte(byteArry.data(), dest, byteArry.size());
                                 is_hex = a_send = true;
                                 send_buf = dest;
                                 send_len = data_len;
@@ -360,8 +364,6 @@ void MainWindow::mainwindow_readData_slot()
                                 QMessageBox::about(NULL, "提示", "输入的应答数据有误!");
                             }
                         } else {
-                            byteArry.clear();
-                            byteArry = item->text(2).toLatin1().data();
                             a_send = true;
                             send_buf = byteArry.data();
                             send_len = byteArry.size();
@@ -374,15 +376,20 @@ void MainWindow::mainwindow_readData_slot()
             } else {
                 disp_buf = recv_buf;
                 if(recv_buf == byteArry) {
+                    byteArry.clear();
+                    byteArry = item->text(2).toLatin1();
                     if(item->checkState(2) == Qt::Checked){//应答数据使用十六进制发送
-                        byteArry.clear();
-                        byteArry = item->text(2).toLatin1();
+                        if(dest) {
+                            free(dest);
+                            dest = NULL;
+                        }
                         dest = (char *)calloc(byteArry.size() + 2, sizeof (char));
                         if(dest ==NULL){
                             qDebug() << "error: calloc dest";
                             break;
                         }
-                        memset(dest, 0, data_len);
+
+
                         data_len = MainWindow::HexStrToByte(byteArry.data(), dest, byteArry.size());
                         if((data_len > 0)){
                             is_hex = a_send = true;
@@ -391,9 +398,7 @@ void MainWindow::mainwindow_readData_slot()
                         }else{
                             QMessageBox::about(NULL, "提示", "输入的应答数据有误!");
                         }
-                    }else{
-                        byteArry.clear();
-                        byteArry = item->text(2).toLatin1();
+                    }else{                        
                         a_send = true;
                         send_buf = byteArry.data();
                         send_len = byteArry.size();
@@ -410,7 +415,7 @@ void MainWindow::mainwindow_readData_slot()
         this->user_serial.user_serial_wirte(send_buf, send_len);
         disp_buf = send_buf;
         if(is_hex == true) {
-            if(is_hex_dest == NULL){
+            if(is_hex_dest == NULL) {
                 qDebug() << "error: calloc dest";
                 return ;
             }
@@ -418,7 +423,7 @@ void MainWindow::mainwindow_readData_slot()
             //disp_buf = recv_buf.constData();
             ByteToHexStr((unsigned char*)send_buf, is_hex_dest, send_len);
             disp_buf = is_hex_dest;
-            qDebug() << "disp_buf.constData()" << disp_buf.constData();
+            //qDebug() << "应答数据" << disp_buf.constData();
             int len =  disp_buf.length();
             for (int i=2; i<len-1; i+=3,len++) {
                 disp_buf.insert(i," ");
@@ -426,16 +431,16 @@ void MainWindow::mainwindow_readData_slot()
             }
         }
         this->mainwindow_dis_rxd_or_txd(" --> tx len:", disp_buf);
-        if(dest)free(dest);
         if(is_hex_dest)free(is_hex_dest);
     }
+    if(dest)free(dest);
 }
 
 
 void MainWindow::on_pushButton_add_clicked()
 {
     QTreeWidgetItem * item = new QTreeWidgetItem;
-    item->setText(0,"");
+    item->setText(0,"描述说明");
     item->setCheckState(0,Qt::Unchecked);
     item->setText(1,"");
     item->setCheckState(1,Qt::Unchecked);
