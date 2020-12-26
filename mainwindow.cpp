@@ -155,14 +155,16 @@ void MainWindow::mainwindow_dis_rxd_or_txd(QString dis_type, QByteArray disp_buf
     QString str;
     QDateTime time;
 
-    str = this->ui->textBrowser->toPlainText();    
+    //str = this->ui->textBrowser->toPlainText();
     time = QDateTime::currentDateTime();          //获取系统现在的时间
-    str += time.toString("yyyy-MM-dd hh:mm:ss ddd") + dis_type + QString("%1").arg(disp_buf.size()) + "\r\n";         //设置显示格式
+    str = time.toString("yyyy-MM-dd hh:mm:ss ddd") + dis_type + QString("%1").arg(disp_buf.size()) + "\r\n";         //设置显示格式
     str += tr(disp_buf);
     str = str + "\r\n";
-    this->ui->textBrowser->clear();
-    this->ui->textBrowser->setText(str);
+    //this->ui->textBrowser->clear();
+    //this->ui->textBrowser->setText(str);
+    this->ui->textBrowser->append(str);
     this->ui->textBrowser->moveCursor(QTextCursor::End);
+
 }
 
 
