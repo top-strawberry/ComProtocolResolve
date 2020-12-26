@@ -11,7 +11,8 @@
 #include <QDebug>
 #include <iostream>
 #include "user_dialog.h"
-
+#include "user_contact_dialog.h"
+#include "user_about_dialog.h"
 
 QT_BEGIN_NAMESPACE
 namespace Ui { class MainWindow; }
@@ -37,6 +38,8 @@ private:
     bool user_serial_isopen;
     User_serial user_serial;
     User_dialog user_dialog;
+    User_contact_dialog user_contact_dialog;
+    User_about_dialog user_about_dialog;
     void mainwindow_update_serial_port(void);
 public:
     User_serial & mainwindow_get_user_serial(void);
@@ -54,5 +57,7 @@ private slots:
     void on_pushButton_add_clicked();
     void mainwindow_itemDoubleClicked_slot(QTreeWidgetItem *item, int column);
     void on_pushButton_sub_clicked();
+    void on_action_contact_triggered();
+    void on_action_about_triggered();
 };
 #endif // MAINWINDOW_H

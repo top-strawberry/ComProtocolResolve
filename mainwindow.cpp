@@ -36,6 +36,8 @@ MainWindow::MainWindow(QWidget *parent)
     item->setText(2,"01 03 02 00 01 79 84");
     item->setCheckState(2,Qt::Checked);
     this->ui->treeWidget->addTopLevelItem(item);
+
+
 }
 
 MainWindow::~MainWindow()
@@ -515,3 +517,25 @@ void MainWindow::mainwindow_itemDoubleClicked_slot(QTreeWidgetItem *item, int co
 }
 
 
+
+void MainWindow::on_action_contact_triggered()
+{
+    int ret = 0;
+    ret = this->user_contact_dialog.exec();
+    if(ret == QDialog::Accepted){//点击确定按钮走这里
+        qDebug()<<"accept";
+    }else if(ret == QDialog::Rejected){//点击取消按钮走这里
+        qDebug()<<"reject";
+    }
+}
+
+void MainWindow::on_action_about_triggered()
+{
+    int ret = 0;
+    ret = this->user_about_dialog.exec();
+    if(ret == QDialog::Accepted){//点击确定按钮走这里
+        qDebug()<<"accept";
+    }else if(ret == QDialog::Rejected){//点击取消按钮走这里
+        qDebug()<<"reject";
+    }
+}

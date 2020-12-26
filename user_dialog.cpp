@@ -11,7 +11,7 @@ User_dialog::User_dialog(QWidget *parent) :
     this->setFixedHeight(480);
     connect(this->ui->pushButton_ok, &QPushButton::clicked, this, &User_dialog::user_dialog_slotOk);
     connect(this->ui->pushButton_cancel, &QPushButton::clicked, this, &User_dialog::user_dialog_slotCancel);
-    qDebug() << this;
+
 }
 
 User_dialog::~User_dialog()

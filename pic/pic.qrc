@@ -1,0 +1,5 @@
+<RCC>
+    <qresource prefix="/vx">
+        <file>vx.jpg</file>
+    </qresource>
+</RCC>

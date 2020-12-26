@@ -19,16 +19,22 @@ DEFINES += QT_DEPRECATED_WARNINGS
 SOURCES += \
     main.cpp \
     mainwindow.cpp \
+    user_about_dialog.cpp \
+    user_contact_dialog.cpp \
     user_dialog.cpp \
     user_serial.cpp
 
 HEADERS += \
     mainwindow.h \
+    user_about_dialog.h \
+    user_contact_dialog.h \
     user_dialog.h \
     user_serial.h
 
 FORMS += \
     mainwindow.ui \
+    user_about_dialog.ui \
+    user_contact_dialog.ui \
     user_dialog.ui
 
 TRANSLATIONS += \
@@ -38,3 +44,6 @@ TRANSLATIONS += \
 qnx: target.path = /tmp/$${TARGET}/bin
 else: unix:!android: target.path = /opt/$${TARGET}/bin
 !isEmpty(target.path): INSTALLS += target
+
+RESOURCES += \
+    pic/pic.qrc
