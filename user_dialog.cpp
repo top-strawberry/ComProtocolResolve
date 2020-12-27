@@ -9,6 +9,7 @@ User_dialog::User_dialog(QWidget *parent) :
     this->setWindowTitle("ComProtocolResolve dialog");
     this->setFixedWidth(800);
     this->setFixedHeight(480);
+    this->setModal(false);
     connect(this->ui->pushButton_ok, &QPushButton::clicked, this, &User_dialog::user_dialog_slotOk);
     connect(this->ui->pushButton_cancel, &QPushButton::clicked, this, &User_dialog::user_dialog_slotCancel);
 

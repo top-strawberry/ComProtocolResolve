@@ -17,6 +17,7 @@
 #include "user_dialog.h"
 #include "user_contact_dialog.h"
 #include "user_about_dialog.h"
+#include "user_messagebox.h"
 
 #define kCFG_JSON_ROOT_PATH "config/"
 #define kCFG_JSON_PATH "cfg.json"
@@ -52,6 +53,7 @@ private:
     User_dialog user_dialog;
     User_contact_dialog user_contact_dialog;
     User_about_dialog user_about_dialog;
+    User_messagebox user_messagebox;
 public:
     User_serial & mainwindow_get_user_serial(void);
     int mainwindow_save_cfg(const QString path);

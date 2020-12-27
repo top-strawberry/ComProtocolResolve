@@ -9,6 +9,7 @@ User_contact_dialog::User_contact_dialog(QWidget *parent) :
     this->setWindowTitle("作者");
     this->setFixedWidth(370);
     this->setFixedHeight(230);
+    this->setModal(false);
 }
 
 User_contact_dialog::~User_contact_dialog()

@@ -381,20 +381,20 @@ void MainWindow::on_button_send_clicked()
         if(item->checkState(0) == Qt::Checked) {
             output_str = item->text(2);
             qDebug() << output_str.toLatin1().data();
-            if(item->checkState(2) == Qt::Checked){//十六进制字符串，转成十六进制再发送
+            if(item->checkState(2) == Qt::Checked) {//十六进制字符串，转成十六进制再发送
                 int data_len = 0;
                 QByteArray byteArry = output_str.toLatin1();
                 char *dest = (char *)calloc(byteArry.size() * 2 + 2, sizeof (char));
-                if(dest ==NULL){
+                if(dest ==NULL) {
                     qDebug() << "error: calloc dest";
                     break;
                 }
                 qDebug() << "byteArry:" << byteArry << "size:" << byteArry.size();
                 data_len = MainWindow::HexStrToByte(output_str.toLatin1().data(), dest, byteArry.size());
-                if((data_len > 0)){
+                if((data_len > 0)) {
                     this->user_serial.user_serial_wirte(dest, data_len);
-                }else{
-                    QMessageBox::about(NULL, "提示", "输入的应答数据有误!");
+                }else {
+                    this->user_messagebox.user_messagebox_about(QString("item %1 您输入的应答数据有误!").arg(i));
                 }
                 free(dest);
             }else{
@@ -477,7 +477,7 @@ void MainWindow::mainwindow_readData_slot()
                                 dest = NULL;
                             }
                             dest = (char *)calloc(byteArry.size() * 2 + 2, sizeof (char));
-                            if(dest ==NULL){
+                            if(dest ==NULL) {
                                 qDebug() << "error: calloc dest";
                                 break;
                             }
@@ -488,7 +488,7 @@ void MainWindow::mainwindow_readData_slot()
                                 send_buf = dest;
                                 send_len = data_len;
                             } else {
-                                QMessageBox::about(NULL, "提示", "输入的应答数据有误!");
+                                this->user_messagebox.user_messagebox_about(QString("item %1 您输入的应答数据有误!").arg(i));
                             }
                         } else {
                             a_send = true;
@@ -498,34 +498,33 @@ void MainWindow::mainwindow_readData_slot()
                         break;
                     }
                 } else {
-                    QMessageBox::about(NULL, "提示", "输入的接收数据有误!");
+                    this->user_messagebox.user_messagebox_about(QString("item %1 您输入的接收数据有误!").arg(i));
                 }
             } else {
                 disp_buf = recv_buf;
                 if(recv_buf == byteArry) {
                     byteArry.clear();
                     byteArry = item->text(2).toLatin1();
-                    if(item->checkState(2) == Qt::Checked){//应答数据使用十六进制发送
+                    if(item->checkState(2) == Qt::Checked) {//应答数据使用十六进制发送
                         if(dest) {
                             free(dest);
                             dest = NULL;
                         }
                         dest = (char *)calloc(byteArry.size() + 2, sizeof (char));
-                        if(dest ==NULL){
+                        if(dest ==NULL) {
                             qDebug() << "error: calloc dest";
                             break;
                         }
 
-
                         data_len = MainWindow::HexStrToByte(byteArry.data(), dest, byteArry.size());
-                        if((data_len > 0)){
+                        if((data_len > 0)) {
                             is_hex = a_send = true;
                             send_buf = dest;
                             send_len = data_len;
-                        }else{
-                            QMessageBox::about(NULL, "提示", "输入的应答数据有误!");
+                        }else {
+                            this->user_messagebox.user_messagebox_about(QString("item %1 您输入的应答数据有误!").arg(i));
                         }
-                    }else{                        
+                    }else {
                         a_send = true;
                         send_buf = byteArry.data();
                         send_len = byteArry.size();
@@ -627,6 +626,7 @@ void MainWindow::mainwindow_itemDoubleClicked_slot(QTreeWidgetItem *item, int co
     user_dialog_ui->textEdit_r->setText(textEdit_r_str);
     user_dialog_ui->textEdit_t->setText(textEdit_t_str);
 
+    this->user_dialog.show();
     ret = this->user_dialog.exec();
     if(ret == QDialog::Accepted){//点击确定按钮走这里
         qDebug()<<"accept";
@@ -647,7 +647,9 @@ void MainWindow::mainwindow_itemDoubleClicked_slot(QTreeWidgetItem *item, int co
 void MainWindow::on_action_contact_triggered()
 {
     int ret = 0;
-    ret = this->user_contact_dialog.exec();
+
+    this->user_contact_dialog.show();
+    //ret = this->user_contact_dialog.exec();
     if(ret == QDialog::Accepted){//点击确定按钮走这里
         qDebug()<<"accept";
     }else if(ret == QDialog::Rejected){//点击取消按钮走这里
@@ -658,7 +660,9 @@ void MainWindow::on_action_contact_triggered()
 void MainWindow::on_action_about_triggered()
 {
     int ret = 0;
-    ret = this->user_about_dialog.exec();
+
+    this->user_about_dialog.show();
+    //ret = this->user_about_dialog.exec();
     if(ret == QDialog::Accepted){//点击确定按钮走这里
         qDebug()<<"accept";
     }else if(ret == QDialog::Rejected){//点击取消按钮走这里
@@ -692,7 +696,6 @@ void MainWindow::on_action_open_triggered()
 //        qDebug() << "str_path:" << str_path;
 //    }
     QString str_path;
-
 
     str_path = QFileDialog::getOpenFileName(this, tr("选择配置文件"), tr(kCFG_JSON_ROOT_PATH), tr("配置文件(*.json);;所有文件(*);"));
     if(!str_path.isNull()){
