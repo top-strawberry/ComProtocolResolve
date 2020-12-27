@@ -28,17 +28,33 @@ MainWindow::MainWindow(QWidget *parent)
     header->setDefaultAlignment(Qt::AlignLeft);
     this->ui->treeWidget->setHeader(header);
     //添加一个item
-    QTreeWidgetItem * item = new QTreeWidgetItem;
-    item->setText(0,"测试");
-    item->setCheckState(0,Qt::Checked);
-    item->setText(1,"01 03 00 00 00 01 84 0A");
-    item->setCheckState(1,Qt::Checked);
-    item->setText(2,"01 03 02 00 01 79 84");
-    item->setCheckState(2,Qt::Checked);
-    this->ui->treeWidget->addTopLevelItem(item);
-
-
+//    QTreeWidgetItem * item = new QTreeWidgetItem;
+//    item->setText(0,"测试");
+//    item->setCheckState(0,Qt::Checked);
+//    item->setText(1,"01 03 00 00 00 01 84 0A");
+//    item->setCheckState(1,Qt::Checked);
+//    item->setText(2,"01 03 02 00 01 79 84");
+//    item->setCheckState(2,Qt::Checked);
+//    this->ui->treeWidget->addTopLevelItem(item);
+    QString path;
+    QDir dir;
+    path = kCFG_JSON_ROOT_PATH;
+    path += kCFG_JSON_PATH;
+    if(!dir.exists(kCFG_JSON_ROOT_PATH)) {
+        dir.mkdir(kCFG_JSON_ROOT_PATH);
+        QTreeWidgetItem * item = new QTreeWidgetItem;
+        item->setText(0,"测试");
+        item->setCheckState(0,Qt::Checked);
+        item->setText(1,"01 03 00 00 00 01 84 0A");
+        item->setCheckState(1,Qt::Checked);
+        item->setText(2,"01 03 02 00 01 79 84");
+        item->setCheckState(2,Qt::Checked);
+        this->ui->treeWidget->addTopLevelItem(item);
+    }else {
+        this->mainwindow_load_cfg(path);
+    }
 }
+
 
 MainWindow::~MainWindow()
 {
@@ -142,6 +158,105 @@ User_serial &MainWindow::mainwindow_get_user_serial(void)
     return this->user_serial;
 }
 
+int MainWindow::mainwindow_load_cfg(const QString path)
+{
+    QByteArray data;
+    QJsonDocument doc;
+    QJsonArray array;
+    QJsonObject obj;
+    QJsonValue obj_value;
+    int nSize = -1;
+    QJsonParseError error;
+    User_json_create_object_arg arg;
+    QTreeWidgetItem * item = NULL;
+    //加载json文件
+    QFile file(path);
+    if(file.open(QIODevice::ReadOnly) == false){
+        return -1;
+    }
+    data = file.readAll();
+    file.close();
+    doc = QJsonDocument::fromJson(data, &error);
+    if(!doc.isNull() && (QJsonParseError::NoError == error.error)) {
+        if (doc.isArray()) { // JSON 文档为数组
+            array = doc.array();  // 转化为数组
+            nSize = array.size();  // 获取数组大小
+            for (int i = 0; i < nSize; ++i) {  // 遍历数组
+                obj_value = array.at(i);
+                if(obj_value.isObject()) {
+                    obj = obj_value.toObject();
+                    this->user_json.user_json_parse_object(obj, arg);
+                    qDebug() << "describe_checked:" << arg.describe_checked;
+                    qDebug() << "rxd_checked:" << arg.rxd_checked;
+                    qDebug() << "txd_checked:" << arg.txd_checked;
+                    item = new QTreeWidgetItem;
+                    item->setCheckState(0, (Qt::CheckState)arg.describe_checked);
+                    if(arg.describe_checked == true){
+                        item->setCheckState(0, Qt::Checked);
+                    }
+                    item->setCheckState(1, (Qt::CheckState)arg.rxd_checked);
+                    if(arg.rxd_checked == true){
+                        item->setCheckState(1, Qt::Checked);
+                    }
+                    item->setCheckState(2, (Qt::CheckState)arg.txd_checked);
+                    if(arg.txd_checked == true){
+                        item->setCheckState(2, Qt::Checked);
+                    }
+                    item->setText(0, arg.describe);
+                    item->setText(1, arg.rxd);
+                    item->setText(2, arg.txd);
+                    this->ui->treeWidget->addTopLevelItem(item);
+                }
+            }
+        }
+    }
+
+    return 0;
+}
+
+int MainWindow::mainwindow_save_cfg(const QString path)
+{
+    int i = 0;
+    int item_count = 0;
+    QByteArray data;
+    QJsonDocument doc;
+    QJsonArray obj;
+    QJsonObject sub;
+    User_json_create_object_arg arg;
+    QTreeWidgetItem * item = NULL;
+
+    QTreeWidgetItemIterator it(ui->treeWidget);
+    //遍历treeWidget,计算item数量
+    while (*it) {
+        item_count ++;
+        ++it;
+    }
+    qDebug() << "item_count:" << item_count;
+    for (i = 0; i < item_count; i ++) {
+        item = this->ui->treeWidget->topLevelItem(i);
+        arg.describe_checked = item->checkState(0);
+        arg.rxd_checked = item->checkState(1);
+        arg.txd_checked = item->checkState(2);
+        arg.describe = item->text(0);
+        arg.rxd = item->text(1);
+        arg.txd = item->text(2);
+        this->user_json.user_json_create_object(sub, arg);
+        qDebug() << "sub:" << sub;
+        obj.append(sub);
+    }
+    doc.setArray(obj);
+    data = doc.toJson();
+
+    //json写入文件
+    QFile file(path);
+    file.open(QIODevice::WriteOnly);
+    file.write(data);
+    file.close();
+
+    return 0;
+}
+
+
 void MainWindow::mainwindow_set_combobox_enable(bool state)
 {
     this->ui->comboBox_serial->setEnabled(state);
@@ -166,7 +281,6 @@ void MainWindow::mainwindow_dis_rxd_or_txd(QString dis_type, QByteArray disp_buf
     //this->ui->textBrowser->setText(str);
     this->ui->textBrowser->append(str);
     this->ui->textBrowser->moveCursor(QTextCursor::End);
-
 }
 
 
@@ -180,6 +294,15 @@ void MainWindow::mainwindow_update_serial_port(void)
     }
     this->ui->comboBox_serial->clear();
     this->ui->comboBox_serial->addItems(available_ports_list);
+}
+
+void MainWindow::mainwindow_delete_QTreeWidgetItem(int currentIndex)
+{
+    QTreeWidgetItem *item = NULL;
+    item = this->ui->treeWidget->takeTopLevelItem(currentIndex);
+    qDebug() << "delete item:" << item;
+    delete item;
+    item = NULL;
 }
 
 void MainWindow::on_button_update_clicked()
@@ -453,6 +576,8 @@ void MainWindow::on_pushButton_add_clicked()
     this->ui->treeWidget->addTopLevelItem(item);
 }
 
+
+
 void MainWindow::on_pushButton_sub_clicked()
 {
     int i = 0;
@@ -467,10 +592,11 @@ void MainWindow::on_pushButton_sub_clicked()
         QTreeWidgetItem * item = NULL;
         item = this->ui->treeWidget->topLevelItem(i);
         if(item->isSelected()){
-            item = this->ui->treeWidget->takeTopLevelItem(this->ui->treeWidget->currentIndex().row());
-            qDebug() << "delete item:" << item;
-            delete item;
-            item = NULL;
+            this->mainwindow_delete_QTreeWidgetItem(this->ui->treeWidget->currentIndex().row());
+//            item = this->ui->treeWidget->takeTopLevelItem(this->ui->treeWidget->currentIndex().row());
+//            qDebug() << "delete item:" << item;
+//            delete item;
+//            item = NULL;
             break;
         }
     }
@@ -538,4 +664,60 @@ void MainWindow::on_action_about_triggered()
     }else if(ret == QDialog::Rejected){//点击取消按钮走这里
         qDebug()<<"reject";
     }
+}
+
+void MainWindow::on_action_save_triggered()
+{
+    QString save_path;
+    QString default_path;
+
+    save_path = QFileDialog::getSaveFileName(this, tr("选择配置文件"), tr(kCFG_JSON_ROOT_PATH), tr("配置文件(*.json);;所有文件(*);"));
+    if(!save_path.isNull()){
+        qDebug() << "save_path=" << save_path;
+        default_path = kCFG_JSON_ROOT_PATH;
+        default_path += kCFG_JSON_PATH;
+        if(default_path == save_path) {
+            this->mainwindow_save_cfg(default_path);
+        } else {
+            this->mainwindow_save_cfg(default_path);
+            this->mainwindow_save_cfg(save_path);
+        }
+    }
+}
+
+void MainWindow::on_action_open_triggered()
+{
+//    QStringList str_path_list = QFileDialog::getOpenFileNames(this, tr("选择配置文件"), tr(kCFG_JSON_ROOT_PATH), tr("配置文件(*.json);;"));
+//    foreach(QString str_path, str_path_list){
+//        qDebug() << "str_path:" << str_path;
+//    }
+    QString str_path;
+
+
+    str_path = QFileDialog::getOpenFileName(this, tr("选择配置文件"), tr(kCFG_JSON_ROOT_PATH), tr("配置文件(*.json);;所有文件(*);"));
+    if(!str_path.isNull()){
+        this->ui->treeWidget->clear();
+        qDebug() << "path=" << str_path;
+        this->mainwindow_load_cfg(str_path);
+    }
+}
+
+void MainWindow::on_action_new_triggered()
+{
+    QString save_path;
+    QString default_path;
+
+    save_path = QFileDialog::getSaveFileName(this, tr("选择配置文件"), tr(kCFG_JSON_ROOT_PATH), tr("配置文件(*.json);;所有文件(*);"));
+    if(!save_path.isNull()){
+        qDebug() << "save_path=" << save_path;
+        default_path = kCFG_JSON_ROOT_PATH;
+        default_path += kCFG_JSON_PATH;
+        if(default_path == save_path) {
+            this->mainwindow_save_cfg(default_path);
+        } else {
+            this->mainwindow_save_cfg(default_path);
+            this->mainwindow_save_cfg(save_path);
+        }
+    }
+    this->ui->treeWidget->clear();
 }

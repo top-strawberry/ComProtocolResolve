@@ -22,6 +22,7 @@ SOURCES += \
     user_about_dialog.cpp \
     user_contact_dialog.cpp \
     user_dialog.cpp \
+    user_json.cpp \
     user_serial.cpp
 
 HEADERS += \
@@ -29,6 +30,7 @@ HEADERS += \
     user_about_dialog.h \
     user_contact_dialog.h \
     user_dialog.h \
+    user_json.h \
     user_serial.h
 
 FORMS += \
