@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     , user_serial()
 {
     ui->setupUi(this);
-    this->setWindowTitle("ComProtocolResolve(by stawberry)");
+    this->setWindowTitle("ComProtocolResolve (by stawberry)");
     this->setFixedWidth(1024);
     this->setFixedHeight(800);
     this->mainwindow_update_serial_port();
@@ -441,6 +441,9 @@ void MainWindow::mainwindow_readData_slot()
         if(item->checkState(0) == Qt::Checked) {
             byteArry = item->text(1).toLatin1();
             qDebug() << "接收数据:" << byteArry << "size:" << byteArry.size();
+            if(byteArry.size() <= 0) {
+                continue;
+            }
             if(item->checkState(1) == Qt::Checked) {//十六进制字符串，转成十六进制再比较
                 data_len = 0;
                 dest = (char *)calloc(recv_buf.size() * 2 + 2, sizeof (char));
