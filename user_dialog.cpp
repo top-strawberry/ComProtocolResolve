@@ -3,7 +3,7 @@
 
 User_dialog::User_dialog(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui_user_dialog::User_dialog)
+    ui(new Ui_user_dialog::User_dialog_ui)
 {
     this->ui->setupUi(this);
     this->setWindowTitle("ComProtocolResolve dialog(by stawberry)");
@@ -20,7 +20,7 @@ User_dialog::~User_dialog()
     delete ui;
 }
 
-Ui_user_dialog::User_dialog *User_dialog::user_dialog_get_ui()
+Ui_user_dialog::User_dialog_ui *User_dialog::user_dialog_get_ui()
 {
     return this->ui;
 }

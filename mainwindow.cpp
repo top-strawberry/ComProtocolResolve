@@ -623,7 +623,7 @@ void MainWindow::mainwindow_itemDoubleClicked_slot(QTreeWidgetItem *item, int co
     QString textEdit_d_str;
     QString textEdit_r_str;
     QString textEdit_t_str;
-    Ui_user_dialog::User_dialog *user_dialog_ui = NULL;
+    Ui_user_dialog::User_dialog_ui *user_dialog_ui = NULL;
 
     column = 0;
     index = this->ui->treeWidget->indexOfTopLevelItem(item);
