@@ -12,12 +12,20 @@ User_messagebox::~User_messagebox()
 
 int User_messagebox::user_messagebox_about(QString msg_str)
 {
-    QMessageBox * msg = new QMessageBox;
+    static QMessageBox * msg = NULL;
+
+    if(msg) {
+        msg->close();
+        delete msg;
+        msg = NULL;
+    }
+    msg = new QMessageBox;
     msg->setModal(false); // if you want it non-modal
     msg->setWindowTitle("提示");
     msg->setText(msg_str);
     msg->show();
     msg->exec();
     delete msg;
+    msg = NULL;
     return 0;
 }
