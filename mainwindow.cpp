@@ -694,7 +694,7 @@ void MainWindow::on_action_save_triggered()
     QString save_path;
     QString default_path;
 
-    save_path = QFileDialog::getSaveFileName(this, tr("选择配置文件"), tr(kCFG_JSON_ROOT_PATH), tr("配置文件(*.json);;所有文件(*);"));
+    save_path = QFileDialog::getSaveFileName(this, tr("保存配置文件"), tr(kCFG_JSON_ROOT_PATH), tr("配置文件(*.json);;所有文件(*);"));
     if(!save_path.isNull()){
         qDebug() << "save_path=" << save_path;
         default_path = kCFG_JSON_ROOT_PATH;
@@ -729,7 +729,7 @@ void MainWindow::on_action_new_triggered()
     QString save_path;
     QString default_path;
 
-    save_path = QFileDialog::getSaveFileName(this, tr("选择配置文件"), tr(kCFG_JSON_ROOT_PATH), tr("配置文件(*.json);;所有文件(*);"));
+    save_path = QFileDialog::getSaveFileName(this, tr("保存配置文件"), tr(kCFG_JSON_ROOT_PATH), tr("配置文件(*.json);;所有文件(*);"));
     if(!save_path.isNull()){
         qDebug() << "save_path=" << save_path;
         default_path = kCFG_JSON_ROOT_PATH;
