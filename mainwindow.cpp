@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     , user_serial()
 {
     ui->setupUi(this);
-    this->setWindowTitle("ComProtocolResolve");
+    this->setWindowTitle("ComProtocolResolve(by stawberry)");
     this->setFixedWidth(1024);
     this->setFixedHeight(800);
     this->mainwindow_update_serial_port();
@@ -565,6 +565,18 @@ void MainWindow::mainwindow_readData_slot()
 
 void MainWindow::on_pushButton_add_clicked()
 {
+    int item_count = 0;
+    QTreeWidgetItemIterator it(ui->treeWidget);
+    //遍历treeWidget,计算item数量
+    while (*it) {
+        item_count ++;
+        ++it;
+        if(item_count >= 10) {
+            this->user_messagebox.user_messagebox_about(QString("配置item,限制总数量不超过10条!"));
+            return;
+        }
+    }
+
     QTreeWidgetItem * item = new QTreeWidgetItem;
     item->setText(0,"描述说明");
     item->setCheckState(0,Qt::Unchecked);
@@ -648,6 +660,8 @@ void MainWindow::on_action_contact_triggered()
 {
     int ret = 0;
 
+    this->user_contact_dialog.setWindowFlags(this->windowFlags() | Qt::WindowStaysOnTopHint);
+    this->user_contact_dialog.setWindowFlags(this->windowFlags());
     this->user_contact_dialog.show();
     //ret = this->user_contact_dialog.exec();
     if(ret == QDialog::Accepted){//点击确定按钮走这里
@@ -661,6 +675,8 @@ void MainWindow::on_action_about_triggered()
 {
     int ret = 0;
 
+    this->user_about_dialog.setWindowFlags(this->windowFlags() | Qt::WindowStaysOnTopHint);
+    this->user_about_dialog.setWindowFlags(this->windowFlags());
     this->user_about_dialog.show();
     //ret = this->user_about_dialog.exec();
     if(ret == QDialog::Accepted){//点击确定按钮走这里

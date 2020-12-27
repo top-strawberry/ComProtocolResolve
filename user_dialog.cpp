@@ -6,7 +6,7 @@ User_dialog::User_dialog(QWidget *parent) :
     ui(new Ui_user_dialog::User_dialog)
 {
     this->ui->setupUi(this);
-    this->setWindowTitle("ComProtocolResolve dialog");
+    this->setWindowTitle("ComProtocolResolve dialog(by stawberry)");
     this->setFixedWidth(800);
     this->setFixedHeight(480);
     this->setModal(false);
