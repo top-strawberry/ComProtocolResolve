@@ -1,7 +1,7 @@
 #include "mainwindow.h"
 #include "ui_mainwindow.h"
 
-#include <QHeaderView>
+//#include <QHeaderView>
 
 MainWindow::MainWindow(QWidget *parent)
     : QMainWindow(parent)
@@ -15,6 +15,7 @@ MainWindow::MainWindow(QWidget *parent)
     this->mainwindow_update_serial_port();
     connect(&this->user_serial, &QSerialPort::readyRead, this, &MainWindow::mainwindow_readData_slot);
     connect(this->ui->treeWidget, &QTreeWidget::itemDoubleClicked, this, &MainWindow::mainwindow_itemDoubleClicked_slot);
+    connect(this->ui->comboBox_baud_rate,SIGNAL(activated(int)), this, SLOT(mainwindow_qcombobox_activated_slot(int)));
 
     //设置头部的内容
     QStringList list;
@@ -666,6 +667,32 @@ void MainWindow::mainwindow_itemDoubleClicked_slot(QTreeWidgetItem *item, int co
     }else if(ret == QDialog::Rejected){//点击取消按钮走这里
         qDebug()<<"reject";
     }
+}
+
+void MainWindow::mainwindow_qcombobox_activated_slot(int index)
+{
+    int ret = -1;
+    QString lineEdit_str;
+    Ui_user_baud_rate_dialog::User_baud_rate_dialog_ui *user_baud_rate_dialog_ui = NULL;
+    //qDebug() <<  "mainwindow_qcombobox_index_xchanged_slot index = " << index;
+    if(index == 1) {
+        user_baud_rate_dialog_ui = this->user_baud_dialog.user_baud_rate_dialog_get_ui();
+        user_baud_rate_dialog_ui->lineEdit->clear();
+
+        this->user_baud_dialog.setWindowFlags(this->windowFlags() | Qt::WindowStaysOnTopHint);
+        this->user_baud_dialog.setWindowFlags(this->windowFlags());
+        this->user_baud_dialog.show();
+        ret = this->user_baud_dialog.exec();
+        if(ret == QDialog::Accepted){//点击确定按钮走这里
+            qDebug()<<"accept";
+            lineEdit_str = user_baud_rate_dialog_ui->lineEdit->text();
+            this->ui->comboBox_baud_rate->setItemText(0, lineEdit_str);
+        }else if(ret == QDialog::Rejected){//点击取消按钮走这里
+            qDebug()<<"reject";
+        }
+        this->ui->comboBox_baud_rate->setCurrentIndex(0);
+    }
+
 }
 
 

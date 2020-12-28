@@ -17,6 +17,7 @@
 #include "user_dialog.h"
 #include "user_contact_dialog.h"
 #include "user_about_dialog.h"
+#include "user_baud_rate_dialog.h"
 #include "user_messagebox.h"
 
 #define kCFG_JSON_ROOT_PATH "config/"
@@ -53,7 +54,9 @@ private:
     User_dialog user_dialog;
     User_contact_dialog user_contact_dialog;
     User_about_dialog user_about_dialog;
+    User_baud_rate_dialog user_baud_dialog;
     User_messagebox user_messagebox;
+
 public:
     User_serial & mainwindow_get_user_serial(void);
     int mainwindow_save_cfg(const QString path);
@@ -66,6 +69,8 @@ public:
     void mainwindow_add_test_item(void);
 
 private slots:
+    void mainwindow_itemDoubleClicked_slot(QTreeWidgetItem *item, int column);
+    void mainwindow_qcombobox_activated_slot(int index);
     void on_button_update_clicked();
     void on_button_start_clicked();
     void on_button_stop_clicked();
@@ -73,7 +78,6 @@ private slots:
     void on_button_send_clicked();
     void mainwindow_readData_slot();
     void on_pushButton_add_clicked();
-    void mainwindow_itemDoubleClicked_slot(QTreeWidgetItem *item, int column);
     void on_pushButton_sub_clicked();
     void on_action_contact_triggered();
     void on_action_about_triggered();

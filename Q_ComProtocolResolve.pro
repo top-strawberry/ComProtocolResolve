@@ -20,6 +20,7 @@ SOURCES += \
     main.cpp \
     mainwindow.cpp \
     user_about_dialog.cpp \
+    user_baud_rate_dialog.cpp \
     user_contact_dialog.cpp \
     user_dialog.cpp \
     user_json.cpp \
@@ -29,6 +30,7 @@ SOURCES += \
 HEADERS += \
     mainwindow.h \
     user_about_dialog.h \
+    user_baud_rate_dialog.h \
     user_contact_dialog.h \
     user_dialog.h \
     user_json.h \
@@ -38,6 +40,7 @@ HEADERS += \
 FORMS += \
     mainwindow.ui \
     user_about_dialog.ui \
+    user_baud_rate_dialog.ui \
     user_contact_dialog.ui \
     user_dialog.ui
 
