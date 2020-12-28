@@ -41,16 +41,15 @@ MainWindow::MainWindow(QWidget *parent)
     path = kCFG_JSON_ROOT_PATH;
     path += kCFG_JSON_PATH;
     if(!dir.exists(kCFG_JSON_ROOT_PATH)) {
-        dir.mkdir(kCFG_JSON_ROOT_PATH);
-        QTreeWidgetItem * item = new QTreeWidgetItem;
-        item->setText(0,"测试");
-        item->setCheckState(0,Qt::Checked);
-        item->setText(1,"01 03 00 00 00 01 84 0A");
-        item->setCheckState(1,Qt::Checked);
-        item->setText(2,"01 03 02 00 01 79 84");
-        item->setCheckState(2,Qt::Checked);
-        this->ui->treeWidget->addTopLevelItem(item);
+        dir.mkdir(kCFG_JSON_ROOT_PATH);        
+        this->mainwindow_add_test_item();
     }else {
+        QFile file(path);
+        if(!file.exists()) {
+            file.open(QIODevice::ReadWrite | QIODevice::Text);
+            file.close();
+            this->mainwindow_add_test_item();
+        }
         this->mainwindow_load_cfg(path);
     }
 }
@@ -303,6 +302,18 @@ void MainWindow::mainwindow_delete_QTreeWidgetItem(int currentIndex)
     qDebug() << "delete item:" << item;
     delete item;
     item = NULL;
+}
+
+void MainWindow::mainwindow_add_test_item()
+{
+    QTreeWidgetItem * item = new QTreeWidgetItem;
+    item->setText(0,"测试");
+    item->setCheckState(0,Qt::Checked);
+    item->setText(1,"01 03 00 00 00 01 84 0A");
+    item->setCheckState(1,Qt::Checked);
+    item->setText(2,"01 03 02 00 01 79 84");
+    item->setCheckState(2,Qt::Checked);
+    this->ui->treeWidget->addTopLevelItem(item);
 }
 
 void MainWindow::on_button_update_clicked()

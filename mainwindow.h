@@ -63,6 +63,7 @@ public:
     void mainwindow_dis_rxd_or_txd(QString dis_type, QByteArray disp_buf);
     void mainwindow_update_serial_port(void);
     void mainwindow_delete_QTreeWidgetItem(int currentIndex);
+    void mainwindow_add_test_item(void);
 
 private slots:
     void on_button_update_clicked();
