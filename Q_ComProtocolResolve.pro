@@ -28,6 +28,7 @@ SOURCES += \
     user_serial.cpp
 
 HEADERS += \
+    common.h \
     mainwindow.h \
     user_about_dialog.h \
     user_baud_rate_dialog.h \

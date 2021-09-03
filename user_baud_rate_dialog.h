@@ -6,8 +6,8 @@
 #include <QRegExp>
 #include <QValidator>
 
-namespace Ui_user_baud_rate_dialog {
-class User_baud_rate_dialog_ui;
+namespace Ui {
+    class User_baud_rate_dialog;
 }
 
 class User_baud_rate_dialog : public QDialog
@@ -24,9 +24,9 @@ private slots:
     void on_pushButton_cancel_clicked();
 
 private:
-    Ui_user_baud_rate_dialog::User_baud_rate_dialog_ui *ui;
+    Ui::User_baud_rate_dialog *ui;
 public:
-    Ui_user_baud_rate_dialog::User_baud_rate_dialog_ui * user_baud_rate_dialog_get_ui(void);
+    Ui::User_baud_rate_dialog * user_baud_rate_dialog_get_ui(void);
 };
 
 #endif // USER_BAUD_RATE_DIALOG_H

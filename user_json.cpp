@@ -12,12 +12,12 @@ User_json::~User_json()
 
 int User_json::user_json_create_object(QJsonObject &obj, User_json_create_object_arg arg)
 {
-    qDebug() << "describe_checked:" << arg.describe_checked;
-    qDebug() << "rxd_checked:" << arg.rxd_checked;
-    qDebug() << "txd_checked:" << arg.txd_checked;
-    qDebug() << "describe:" << arg.describe;
-    qDebug() << "rxd:" << arg.rxd;
-    qDebug() << "txd:" << arg.txd;
+    kLOG_DEBUG() << "describe_checked:" << arg.describe_checked;
+    kLOG_DEBUG() << "rxd_checked:" << arg.rxd_checked;
+    kLOG_DEBUG() << "txd_checked:" << arg.txd_checked;
+    kLOG_DEBUG() << "describe:" << arg.describe;
+    kLOG_DEBUG() << "rxd:" << arg.rxd;
+    kLOG_DEBUG() << "txd:" << arg.txd;
     obj.insert("describe_checked", arg.describe_checked);
     obj.insert("rxd_checked", arg.rxd_checked);
     obj.insert("txd_checked", arg.txd_checked);

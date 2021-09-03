@@ -12,13 +12,14 @@
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QDir>
-#include <QDebug>
+#include "common.h"
 #include <iostream>
 #include "user_dialog.h"
 #include "user_contact_dialog.h"
 #include "user_about_dialog.h"
 #include "user_baud_rate_dialog.h"
 #include "user_messagebox.h"
+
 
 #define kCFG_JSON_ROOT_PATH "config/"
 #define kCFG_JSON_PATH "cfg.json"

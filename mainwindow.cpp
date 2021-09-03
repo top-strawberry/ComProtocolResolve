@@ -72,14 +72,14 @@ int MainWindow::HexStrToByte(const char *source, char *dest, quint32 sourceLen)
         if(source[i] == 0x20) {
             i++;
             if(i >= sourceLen){
-                qDebug() << "error 0: ";
+                kLOG_DEBUG() << "error 0: ";
                 return -1;
             }
             continue;
         }
         while(1) {
             if(i >= sourceLen){
-                qDebug() << "error 1: ";
+                kLOG_DEBUG() << "error 1: ";
                 return -1;
             }
             if(source[i] == 0x20) {
@@ -99,7 +99,7 @@ int MainWindow::HexStrToByte(const char *source, char *dest, quint32 sourceLen)
         };
         while(1) {
             if(i >= sourceLen){
-                qDebug() << "error 2: ";
+                kLOG_DEBUG() << "error 2: ";
                 return -1;
             }
             if(source[i] == 0x20) {
@@ -148,7 +148,7 @@ int MainWindow::ByteToHexStr(const unsigned char *source, char *dest, quint32 so
         }
     }
     dest[2 * sourceLen] = '\0';
-    qDebug() << "2 * sourceLen" << 2 * sourceLen;
+    kLOG_DEBUG() << "2 * sourceLen" << 2 * sourceLen;
     return 2 * sourceLen;
 }
 
@@ -186,9 +186,9 @@ int MainWindow::mainwindow_load_cfg(const QString path)
                 if(obj_value.isObject()) {
                     obj = obj_value.toObject();
                     this->user_json.user_json_parse_object(obj, arg);
-                    qDebug() << "describe_checked:" << arg.describe_checked;
-                    qDebug() << "rxd_checked:" << arg.rxd_checked;
-                    qDebug() << "txd_checked:" << arg.txd_checked;
+                    kLOG_DEBUG() << "describe_checked:" << arg.describe_checked;
+                    kLOG_DEBUG() << "rxd_checked:" << arg.rxd_checked;
+                    kLOG_DEBUG() << "txd_checked:" << arg.txd_checked;
                     item = new QTreeWidgetItem;
                     item->setCheckState(0, (Qt::CheckState)arg.describe_checked);
                     if(arg.describe_checked == true){
@@ -231,7 +231,7 @@ int MainWindow::mainwindow_save_cfg(const QString path)
         item_count ++;
         ++it;
     }
-    qDebug() << "item_count:" << item_count;
+    kLOG_DEBUG() << "item_count:" << item_count;
     for (i = 0; i < item_count; i ++) {
         item = this->ui->treeWidget->topLevelItem(i);
         arg.describe_checked = item->checkState(0);
@@ -241,7 +241,7 @@ int MainWindow::mainwindow_save_cfg(const QString path)
         arg.rxd = item->text(1);
         arg.txd = item->text(2);
         this->user_json.user_json_create_object(sub, arg);
-        qDebug() << "sub:" << sub;
+        kLOG_DEBUG() << "sub:" << sub;
         obj.append(sub);
     }
     doc.setArray(obj);
@@ -290,7 +290,7 @@ void MainWindow::mainwindow_update_serial_port(void)
 
     available_ports_list = this->user_serial.user_serial_get_available_ports_name();
     foreach (QString com, available_ports_list) {
-        qDebug() << "available:" + com;
+        kLOG_DEBUG() << "available:" + com;
     }
     this->ui->comboBox_serial->clear();
     this->ui->comboBox_serial->addItems(available_ports_list);
@@ -300,7 +300,7 @@ void MainWindow::mainwindow_delete_QTreeWidgetItem(int currentIndex)
 {
     QTreeWidgetItem *item = NULL;
     item = this->ui->treeWidget->takeTopLevelItem(currentIndex);
-    qDebug() << "delete item:" << item;
+    kLOG_DEBUG() << "delete item:" << item;
     delete item;
     item = NULL;
 }
@@ -346,14 +346,14 @@ void MainWindow::on_button_start_clicked()
     }else if(this->ui->comboBox_stop_bit->currentText() == "Even"){
         serial_arg.parity = EvenParity;
     }
-//    qDebug() << "baud_rate:";
-//    qDebug() << serial_arg.baud_rate;
-//    qDebug() << "data_bit:";
-//    qDebug() << serial_arg.data_bit;
-//    qDebug() << "stop_bit:";
-//    qDebug() << serial_arg.stop_bit;
-//    qDebug() << "parity:";
-//    qDebug() << serial_arg.parity;
+//    kLOG_DEBUG() << "baud_rate:";
+//    kLOG_DEBUG() << serial_arg.baud_rate;
+//    kLOG_DEBUG() << "data_bit:";
+//    kLOG_DEBUG() << serial_arg.data_bit;
+//    kLOG_DEBUG() << "stop_bit:";
+//    kLOG_DEBUG() << serial_arg.stop_bit;
+//    kLOG_DEBUG() << "parity:";
+//    kLOG_DEBUG() << serial_arg.parity;
     ret = this->user_serial.user_serial_open(serial_arg);
     if(ret == 0){
         this->user_serial_isopen = true;
@@ -387,21 +387,21 @@ void MainWindow::on_button_send_clicked()
         item_count ++;
         ++it;
     }
-    qDebug() << "item_count:" << item_count;
+    kLOG_DEBUG() << "item_count:" << item_count;
     for (i = 0; i < item_count; i ++) {
         QTreeWidgetItem * item = this->ui->treeWidget->topLevelItem(i);
         if(item->checkState(0) == Qt::Checked) {
             output_str = item->text(2);
-            qDebug() << output_str.toLatin1().data();
+            kLOG_DEBUG() << output_str.toLatin1().data();
             if(item->checkState(2) == Qt::Checked) {//十六进制字符串，转成十六进制再发送
                 int data_len = 0;
                 QByteArray byteArry = output_str.toLatin1();
                 char *dest = (char *)calloc(byteArry.size() * 2 + 2, sizeof (char));
                 if(dest ==NULL) {
-                    qDebug() << "error: calloc dest";
+                    kLOG_DEBUG() << "error: calloc dest";
                     break;
                 }
-                qDebug() << "byteArry:" << byteArry << "size:" << byteArry.size();
+                kLOG_DEBUG() << "byteArry:" << byteArry << "size:" << byteArry.size();
                 data_len = MainWindow::HexStrToByte(output_str.toLatin1().data(), dest, byteArry.size());
                 if((data_len > 0)) {
                     this->user_serial.user_serial_wirte(dest, data_len);
@@ -419,7 +419,7 @@ void MainWindow::on_button_send_clicked()
 
 void MainWindow::mainwindow_readData_slot()
 {
-    qDebug() << "*********readData**********";
+    kLOG_DEBUG() << "*********readData**********";
     int i = 0;
     int item_count = 0;
     QString output_str;
@@ -445,14 +445,14 @@ void MainWindow::mainwindow_readData_slot()
         item_count ++;
         ++it;
     }
-    qDebug() << "item_count:" << item_count;
+    kLOG_DEBUG() << "item_count:" << item_count;
     recv_buf = this->user_serial.user_serial_read();
-    qDebug() << "recv_buf:" << recv_buf << "size:" << recv_buf.size();
+    kLOG_DEBUG() << "recv_buf:" << recv_buf << "size:" << recv_buf.size();
     for (i = 0; i < item_count; i ++) {
         item = this->ui->treeWidget->topLevelItem(i);
         if(item->checkState(0) == Qt::Checked) {
             byteArry = item->text(1).toLatin1();
-            qDebug() << "接收数据:" << byteArry << "size:" << byteArry.size();
+            kLOG_DEBUG() << "接收数据:" << byteArry << "size:" << byteArry.size();
             if(byteArry.size() <= 0) {
                 continue;
             }
@@ -460,27 +460,27 @@ void MainWindow::mainwindow_readData_slot()
                 data_len = 0;
                 dest = (char *)calloc(recv_buf.size() * 2 + 2, sizeof (char));
                 if(dest ==NULL){
-                    qDebug() << "error: calloc dest";
+                    kLOG_DEBUG() << "error: calloc dest";
                     break;
                 }
-                //qDebug() << "recv_buf.constData()" << recv_buf.constData();
+                //kLOG_DEBUG() << "recv_buf.constData()" << recv_buf.constData();
                 //disp_buf = recv_buf.constData();
                 data_len = ByteToHexStr((unsigned char*)recv_buf.constData(), dest, recv_buf.size());
                 disp_buf = dest;
-                qDebug() << "disp_buf.constData()" << disp_buf.constData();
+                kLOG_DEBUG() << "disp_buf.constData()" << disp_buf.constData();
                 int len =  disp_buf.length();
                 for (int i=2; i<len-1; i+=3,len++) {
                     disp_buf.insert(i," ");
-                    //qDebug() << i << str ;
+                    //kLOG_DEBUG() << i << str ;
                 }
                 memset(dest, 0, data_len);
 
                 data_len = MainWindow::HexStrToByte(byteArry.data(), dest, byteArry.size());
-                qDebug() << "dest:";
+                kLOG_DEBUG() << "dest:";
                 for (int j= 0; j < data_len; j++) {
-                    qDebug() << dest[j];
+                    kLOG_DEBUG() << dest[j];
                 }
-                qDebug() << "\r\n";
+                kLOG_DEBUG() << "\r\n";
 
                 if((data_len > 0)) {
                     if(memcmp(recv_buf, dest, recv_buf.size()) == 0) {
@@ -493,7 +493,7 @@ void MainWindow::mainwindow_readData_slot()
                             }
                             dest = (char *)calloc(byteArry.size() * 2 + 2, sizeof (char));
                             if(dest ==NULL) {
-                                qDebug() << "error: calloc dest";
+                                kLOG_DEBUG() << "error: calloc dest";
                                 break;
                             }
 
@@ -527,7 +527,7 @@ void MainWindow::mainwindow_readData_slot()
                         }
                         dest = (char *)calloc(byteArry.size() + 2, sizeof (char));
                         if(dest ==NULL) {
-                            qDebug() << "error: calloc dest";
+                            kLOG_DEBUG() << "error: calloc dest";
                             break;
                         }
 
@@ -557,18 +557,18 @@ void MainWindow::mainwindow_readData_slot()
         disp_buf = send_buf;
         if(is_hex == true) {
             if(is_hex_dest == NULL) {
-                qDebug() << "error: calloc dest";
+                kLOG_DEBUG() << "error: calloc dest";
                 return ;
             }
-            //qDebug() << "recv_buf.constData()" << recv_buf.constData();
+            //kLOG_DEBUG() << "recv_buf.constData()" << recv_buf.constData();
             //disp_buf = recv_buf.constData();
             ByteToHexStr((unsigned char*)send_buf, is_hex_dest, send_len);
             disp_buf = is_hex_dest;
-            //qDebug() << "应答数据" << disp_buf.constData();
+            //kLOG_DEBUG() << "应答数据" << disp_buf.constData();
             int len =  disp_buf.length();
             for (int i=2; i<len-1; i+=3,len++) {
                 disp_buf.insert(i," ");
-                //qDebug() << i << str ;
+                //kLOG_DEBUG() << i << str ;
             }
         }
         this->mainwindow_dis_rxd_or_txd(" --> tx len:", disp_buf);
@@ -620,7 +620,7 @@ void MainWindow::on_pushButton_sub_clicked()
         if(item->isSelected()){
             this->mainwindow_delete_QTreeWidgetItem(this->ui->treeWidget->currentIndex().row());
 //            item = this->ui->treeWidget->takeTopLevelItem(this->ui->treeWidget->currentIndex().row());
-//            qDebug() << "delete item:" << item;
+//            kLOG_DEBUG() << "delete item:" << item;
 //            delete item;
 //            item = NULL;
             break;
@@ -635,18 +635,18 @@ void MainWindow::mainwindow_itemDoubleClicked_slot(QTreeWidgetItem *item, int co
     QString textEdit_d_str;
     QString textEdit_r_str;
     QString textEdit_t_str;
-    Ui_user_dialog::User_dialog_ui *user_dialog_ui = NULL;
+    Ui::User_dialog *user_dialog_ui = NULL;
 
     column = 0;
     index = this->ui->treeWidget->indexOfTopLevelItem(item);
-    qDebug() << "******column:" << column;
-    qDebug() << "******index:" << index;
+    kLOG_DEBUG() << "******column:" << column;
+    kLOG_DEBUG() << "******index:" << index;
     textEdit_d_str = item->text(0);
     textEdit_r_str = item->text(1);
     textEdit_t_str = item->text(2);
-    qDebug() << "******textEdit_d_str:" + textEdit_d_str;
-    qDebug() << "******textEdit_r_str:" + textEdit_r_str;
-    qDebug() << "******textEdit_t_str:" + textEdit_t_str;
+    kLOG_DEBUG() << "******textEdit_d_str:" + textEdit_d_str;
+    kLOG_DEBUG() << "******textEdit_r_str:" + textEdit_r_str;
+    kLOG_DEBUG() << "******textEdit_t_str:" + textEdit_t_str;
 
     user_dialog_ui = this->user_dialog.user_dialog_get_ui();
     user_dialog_ui->textEdit_d->setText(textEdit_d_str);
@@ -656,7 +656,7 @@ void MainWindow::mainwindow_itemDoubleClicked_slot(QTreeWidgetItem *item, int co
     this->user_dialog.show();
     ret = this->user_dialog.exec();
     if(ret == QDialog::Accepted){//点击确定按钮走这里
-        qDebug()<<"accept";
+        kLOG_DEBUG()<<"accept";
         textEdit_d_str = user_dialog_ui->textEdit_d->toPlainText();
         textEdit_r_str = user_dialog_ui->textEdit_r->toPlainText();
         textEdit_t_str = user_dialog_ui->textEdit_t->toPlainText();
@@ -665,7 +665,7 @@ void MainWindow::mainwindow_itemDoubleClicked_slot(QTreeWidgetItem *item, int co
         item->setText(2, textEdit_t_str);
         this->ui->treeWidget->addTopLevelItem(item);
     }else if(ret == QDialog::Rejected){//点击取消按钮走这里
-        qDebug()<<"reject";
+        kLOG_DEBUG()<<"reject";
     }
 }
 
@@ -673,8 +673,8 @@ void MainWindow::mainwindow_qcombobox_activated_slot(int index)
 {
     int ret = -1;
     QString lineEdit_str;
-    Ui_user_baud_rate_dialog::User_baud_rate_dialog_ui *user_baud_rate_dialog_ui = NULL;
-    //qDebug() <<  "mainwindow_qcombobox_index_xchanged_slot index = " << index;
+    Ui::User_baud_rate_dialog *user_baud_rate_dialog_ui = NULL;
+    //kLOG_DEBUG() <<  "mainwindow_qcombobox_index_xchanged_slot index = " << index;
     if(index == 1) {
         user_baud_rate_dialog_ui = this->user_baud_dialog.user_baud_rate_dialog_get_ui();
         user_baud_rate_dialog_ui->lineEdit->clear();
@@ -684,11 +684,11 @@ void MainWindow::mainwindow_qcombobox_activated_slot(int index)
         this->user_baud_dialog.show();
         ret = this->user_baud_dialog.exec();
         if(ret == QDialog::Accepted){//点击确定按钮走这里
-            qDebug()<<"accept";
+            kLOG_DEBUG()<<"accept";
             lineEdit_str = user_baud_rate_dialog_ui->lineEdit->text();
             this->ui->comboBox_baud_rate->setItemText(0, lineEdit_str);
         }else if(ret == QDialog::Rejected){//点击取消按钮走这里
-            qDebug()<<"reject";
+            kLOG_DEBUG()<<"reject";
         }
         this->ui->comboBox_baud_rate->setCurrentIndex(0);
     }
@@ -706,9 +706,9 @@ void MainWindow::on_action_contact_triggered()
     this->user_contact_dialog.show();
     //ret = this->user_contact_dialog.exec();
     if(ret == QDialog::Accepted){//点击确定按钮走这里
-        qDebug()<<"accept";
+        kLOG_DEBUG()<<"accept";
     }else if(ret == QDialog::Rejected){//点击取消按钮走这里
-        qDebug()<<"reject";
+        kLOG_DEBUG()<<"reject";
     }
 }
 
@@ -721,9 +721,9 @@ void MainWindow::on_action_about_triggered()
     this->user_about_dialog.show();
     //ret = this->user_about_dialog.exec();
     if(ret == QDialog::Accepted){//点击确定按钮走这里
-        qDebug()<<"accept";
+        kLOG_DEBUG()<<"accept";
     }else if(ret == QDialog::Rejected){//点击取消按钮走这里
-        qDebug()<<"reject";
+        kLOG_DEBUG()<<"reject";
     }
 }
 
@@ -734,7 +734,7 @@ void MainWindow::on_action_save_triggered()
 
     save_path = QFileDialog::getSaveFileName(this, tr("保存配置文件"), tr(kCFG_JSON_ROOT_PATH), tr("配置文件(*.json);;所有文件(*);"));
     if(!save_path.isNull()){
-        qDebug() << "save_path=" << save_path;
+        kLOG_DEBUG() << "save_path=" << save_path;
         default_path = kCFG_JSON_ROOT_PATH;
         default_path += kCFG_JSON_PATH;
         if(default_path == save_path) {
@@ -750,14 +750,14 @@ void MainWindow::on_action_open_triggered()
 {
 //    QStringList str_path_list = QFileDialog::getOpenFileNames(this, tr("选择配置文件"), tr(kCFG_JSON_ROOT_PATH), tr("配置文件(*.json);;"));
 //    foreach(QString str_path, str_path_list){
-//        qDebug() << "str_path:" << str_path;
+//        kLOG_DEBUG() << "str_path:" << str_path;
 //    }
     QString str_path;
 
     str_path = QFileDialog::getOpenFileName(this, tr("选择配置文件"), tr(kCFG_JSON_ROOT_PATH), tr("配置文件(*.json);;所有文件(*);"));
     if(!str_path.isNull()){
         this->ui->treeWidget->clear();
-        qDebug() << "path=" << str_path;
+        kLOG_DEBUG() << "path=" << str_path;
         this->mainwindow_load_cfg(str_path);
     }
 }
@@ -769,7 +769,7 @@ void MainWindow::on_action_new_triggered()
 
     save_path = QFileDialog::getSaveFileName(this, tr("保存配置文件"), tr(kCFG_JSON_ROOT_PATH), tr("配置文件(*.json);;所有文件(*);"));
     if(!save_path.isNull()){
-        qDebug() << "save_path=" << save_path;
+        kLOG_DEBUG() << "save_path=" << save_path;
         default_path = kCFG_JSON_ROOT_PATH;
         default_path += kCFG_JSON_PATH;
         if(default_path == save_path) {

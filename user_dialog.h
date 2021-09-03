@@ -5,8 +5,8 @@
 #include <QDialog>
 #include <QDebug>
 
-namespace Ui_user_dialog {
-class User_dialog_ui;
+namespace Ui {
+    class User_dialog;
 }
 
 class User_dialog : public QDialog
@@ -18,9 +18,9 @@ public:
     ~User_dialog();
 
 private:
-    Ui_user_dialog::User_dialog_ui *ui;
+    Ui::User_dialog *ui;
 public:
-    Ui_user_dialog::User_dialog_ui * user_dialog_get_ui(void);
+    Ui::User_dialog * user_dialog_get_ui(void);
 
 private slots:
     void user_dialog_slotOk();

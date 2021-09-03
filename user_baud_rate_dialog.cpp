@@ -3,7 +3,7 @@
 
 User_baud_rate_dialog::User_baud_rate_dialog(QWidget *parent) :
     QDialog(parent),
-    ui(new Ui_user_baud_rate_dialog::User_baud_rate_dialog_ui)
+    ui(new Ui::User_baud_rate_dialog)
 {
     ui->setupUi(this);
     this->setWindowTitle("自定义波特率");
@@ -34,7 +34,7 @@ void User_baud_rate_dialog::on_pushButton_cancel_clicked()
     reject();
 }
 
-Ui_user_baud_rate_dialog::User_baud_rate_dialog_ui *User_baud_rate_dialog::user_baud_rate_dialog_get_ui()
+Ui::User_baud_rate_dialog *User_baud_rate_dialog::user_baud_rate_dialog_get_ui()
 {
     return this->ui;
 }

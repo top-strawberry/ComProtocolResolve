@@ -9,7 +9,7 @@
 #include <QString>
 #include <QMessageBox>
 #include <QByteArray>
-#include "QDebug"
+#include "common.h"
 
 
 enum BaudRate {

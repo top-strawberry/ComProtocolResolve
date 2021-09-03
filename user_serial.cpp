@@ -21,7 +21,7 @@ QStringList &User_serial::user_serial_get_available_ports_name(void)
         str = info.portName() + "(" + info.description() + ")";
         this->available_ports_list.append(str);
     }
-    qDebug() << this->available_ports_list;
+    kLOG_DEBUG() << this->available_ports_list;
     return this->available_ports_list;
 }
 
@@ -70,15 +70,15 @@ void User_serial::user_serial_close()
 
 int User_serial::user_serial_wirte(const char * send_buf, quint64 buf_len)
 {
-//    qDebug() << "user serial open ok";
-//    qDebug() << "baud_rate:";
-//    qDebug() << this->baudRate();
-//    qDebug() << "data_bit:";
-//    qDebug() << this->dataBits();
-//    qDebug() << "stop_bit:";
-//    qDebug() << this->stopBits();
-//    qDebug() << "parity:";
-//    qDebug() << this->parity();
+//    kLOG_DEBUG() << "user serial open ok";
+//    kLOG_DEBUG() << "baud_rate:";
+//    kLOG_DEBUG() << this->baudRate();
+//    kLOG_DEBUG() << "data_bit:";
+//    kLOG_DEBUG() << this->dataBits();
+//    kLOG_DEBUG() << "stop_bit:";
+//    kLOG_DEBUG() << this->stopBits();
+//    kLOG_DEBUG() << "parity:";
+//    kLOG_DEBUG() << this->parity();
     this->write(send_buf, buf_len);
     return 0;
 }
@@ -87,7 +87,7 @@ QByteArray & User_serial::user_serial_read()
 {
     recv_buf = this->readAll();
     if (!recv_buf.isEmpty()) {
-        qDebug() << recv_buf;
+        kLOG_DEBUG() << recv_buf;
     }
     return recv_buf;
 }

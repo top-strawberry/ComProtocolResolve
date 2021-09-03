@@ -8,7 +8,7 @@
 #include <QJsonParseError>
 
 #include <QString>
-#include <QDebug>
+#include "common.h"
 
 
 typedef struct User_json_create_object_arg
