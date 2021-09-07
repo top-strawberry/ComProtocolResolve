@@ -43,4 +43,6 @@
     #define kLOG_WARNING QMessageLogger().noDebug
 #endif
 
+#define ARRAY_SIZE(array) sizeof(array) / sizeof(array[0])
+
 #endif // COMMON_H

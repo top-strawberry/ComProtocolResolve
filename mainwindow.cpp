@@ -53,12 +53,22 @@ MainWindow::MainWindow(QWidget *parent)
         }
         this->mainwindow_load_cfg(path);
     }
+
+    memset(this->readDataThreadTable, 0, ARRAY_SIZE(this->readDataThreadTable) * sizeof(stReadDataThread));
 }
 
 
 MainWindow::~MainWindow()
 {
     delete ui;
+    unsigned long long tableId = 0;
+    for (tableId = 0; tableId < ARRAY_SIZE(readDataThreadTable); tableId++) {
+        readDataThreadTable[tableId].readDataThread->quit();
+        readDataThreadTable[tableId].readDataThread->wait();
+        readDataThreadTable[tableId].id = 0;
+        delete readDataThreadTable[tableId].readDataThread;
+        readDataThreadTable[tableId].readDataThread = nullptr;
+    }
 }
 
 //十六进制字符串转换为字节流
@@ -317,6 +327,28 @@ void MainWindow::mainwindow_add_test_item()
     this->ui->treeWidget->addTopLevelItem(item);
 }
 
+
+
+void Worker::mainwindow_readDataDoworkSlot(unsigned long long * parameter)
+{
+    kLOG_DEBUG() << "mainwindow_readDataDoworkSlot";
+    kLOG_DEBUG() << "receive the execute signal---------------------------------";
+    kLOG_DEBUG() << "current thread ID:"<<QThread::currentThreadId();
+    kLOG_DEBUG() << "readDataThreadTable:" << parameter;
+    *parameter = (unsigned long long)QThread::currentThreadId();
+    QThread::sleep(5);
+    kLOG_DEBUG() << "finish the work and sent the resultReady signal\n";
+    emit readDataResultReadySignal((unsigned long long)(QThread::currentThreadId()));
+}
+
+void Worker::mainwindow_readDataDeleteLater(Worker * self)
+{
+    if(self) {
+        kLOG_DEBUG() << "mainwindow_readDataDeleteLater";
+        delete self;
+    }
+}
+
 void MainWindow::on_button_update_clicked()
 {
     this->mainwindow_update_serial_port();
@@ -417,6 +449,8 @@ void MainWindow::on_button_send_clicked()
     }
 }
 
+
+
 void MainWindow::mainwindow_readData_slot()
 {
     kLOG_DEBUG() << "*********readData**********";
@@ -428,6 +462,8 @@ void MainWindow::mainwindow_readData_slot()
     QString str;
     QString textEdit_t_str;
     QByteArray byteArry;
+    unsigned long long tableId = 0;
+
     QTreeWidgetItem * item = NULL;
     int data_len = 0;
     char * dest = NULL;
@@ -440,11 +476,34 @@ void MainWindow::mainwindow_readData_slot()
     if(this->user_serial_isopen == false){
         return;
     }
+
     //遍历treeWidget,计算item数量
     while (*it) {
         item_count ++;
         ++it;
     }
+
+
+    for ( tableId= 0; tableId < ARRAY_SIZE(this->readDataThreadTable); tableId++) {
+        if(this->readDataThreadTable[tableId].id == 0) break;
+    }
+
+    Worker * worker = NULL;
+    this->readDataThreadTable[tableId].worker = new Worker;
+    worker = this->readDataThreadTable[tableId].worker;
+    this->readDataThreadTable[tableId].readDataThread = new QThread;
+    worker->moveToThread(this->readDataThreadTable[tableId].readDataThread);
+    //operate信号发射后启动线程工作
+    connect(this, SIGNAL(readDataOperate(unsigned long long *)), worker, SLOT(mainwindow_readDataDoworkSlot(unsigned long long *)));
+    //该线程结束时销毁
+    connect(this->readDataThreadTable[tableId].readDataThread, &QThread::finished, worker, &QThread::deleteLater);
+    //线程结束后发送信号，对结果进行处理
+    connect(worker, SIGNAL(readDataResultReadySignal(unsigned long long)), this, SLOT(handleResults(unsigned long long)));
+    //启动线程
+    this->readDataThreadTable[tableId].readDataThread->start();
+    emit readDataOperate(&this->readDataThreadTable[tableId].id);
+
+
     kLOG_DEBUG() << "item_count:" << item_count;
     recv_buf = this->user_serial.user_serial_read();
     kLOG_DEBUG() << "recv_buf:" << recv_buf << "size:" << recv_buf.size();
@@ -781,3 +840,25 @@ void MainWindow::on_action_new_triggered()
     }
     this->ui->treeWidget->clear();
 }
+
+void MainWindow::handleResults(const unsigned long long threadId)
+{
+    //kLOG_DEBUG()<<"receive the resultReady signal---------------------------------";
+    //kLOG_DEBUG()<<"current thread ID:"<<QThread::currentThreadId()<<'\n';
+    //kLOG_DEBUG()<<"the last result is:"<<threadId;
+    unsigned long long tableId = 0;
+    for (tableId = 0; tableId < ARRAY_SIZE(readDataThreadTable); tableId++) {
+        //kLOG_DEBUG()<<"readDataThreadTable["<<tableId<<"].id:"<<readDataThreadTable[tableId].id;
+        if(readDataThreadTable[tableId].id == threadId){
+            kLOG_DEBUG() << "delete readDataThread:" << threadId;
+            readDataThreadTable[tableId].id = 0;
+            readDataThreadTable[tableId].readDataThread->quit();
+            readDataThreadTable[tableId].readDataThread->wait();
+            delete readDataThreadTable[tableId].readDataThread;
+            readDataThreadTable[tableId].readDataThread = nullptr;
+            break;
+        }
+    }
+}
+
+

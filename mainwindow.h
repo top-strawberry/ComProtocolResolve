@@ -12,6 +12,7 @@
 #include <QFileInfo>
 #include <QFileDialog>
 #include <QDir>
+#include <QThread>
 #include "common.h"
 #include <iostream>
 #include "user_dialog.h"
@@ -33,6 +34,29 @@ QT_END_NAMESPACE
 #include "user_serial.h"
 #include "user_json.h"
 
+class Worker:public QObject
+{
+    Q_OBJECT
+public:
+    Worker(){};
+    ~Worker(){};
+public slots:
+    void mainwindow_readDataDeleteLater(Worker * self);
+     // doWork定义了线程要执行的操作
+     void mainwindow_readDataDoworkSlot(unsigned long long *parameter);
+
+// 线程完成工作时发送的信号
+signals:
+     void readDataResultReadySignal(const unsigned long long threadId);// 线程完成工作时发送的信号
+};
+
+
+typedef struct {
+    unsigned long long id;
+    Worker *worker;
+    QThread *readDataThread;
+} stReadDataThread;
+
 class MainWindow : public QMainWindow
 {
     Q_OBJECT
@@ -50,13 +74,15 @@ private:
     Ui::MainWindow *ui;
 private:
     bool user_serial_isopen;
+
+    stReadDataThread readDataThreadTable[256];
     User_serial user_serial;
     User_json user_json;
     User_dialog user_dialog;
     User_contact_dialog user_contact_dialog;
     User_about_dialog user_about_dialog;
     User_baud_rate_dialog user_baud_dialog;
-    User_messagebox user_messagebox;
+    User_messagebox user_messagebox; 
 
 public:
     User_serial & mainwindow_get_user_serial(void);
@@ -85,5 +111,13 @@ private slots:
     void on_action_save_triggered();
     void on_action_open_triggered();
     void on_action_new_triggered();
+
+    // 处理线程执行的结果
+    void handleResults(const unsigned long long threadId)
+
+
+
+signals:
+    void readDataOperate(unsigned long long *); // 发送信号触发线程
 };
 #endif // MAINWINDOW_H
