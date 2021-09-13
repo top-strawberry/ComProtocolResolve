@@ -24,6 +24,8 @@
 
 #define kCFG_JSON_ROOT_PATH "config/"
 #define kCFG_JSON_PATH "cfg.json"
+#define  kDIS_TYPE_TX    " --> tx len:"
+#define  kDIS_TYPE_RX    " --> rx len:"
 
 typedef int (*cfg_opt)(const QString path);
 
@@ -34,6 +36,8 @@ QT_END_NAMESPACE
 #include "user_serial.h"
 #include "user_json.h"
 
+class MainWindow;
+
 class Worker:public QObject
 {
     Q_OBJECT
@@ -42,8 +46,8 @@ public:
     ~Worker(){};
 public slots:
     void mainwindow_readDataDeleteLater(Worker * self);
-     // doWork定义了线程要执行的操作
-     void mainwindow_readDataDoworkSlot(unsigned long long *parameter);
+    // doWork定义了线程要执行的操作
+    void mainwindow_readDataDoworkSlot(MainWindow * mainWindow);
 
 // 线程完成工作时发送的信号
 signals:
@@ -67,12 +71,12 @@ public:
 
 public:  //声明静态成员函数
     static int HexStrToByte(const char *source, char *dest, quint32 sourceLen);
-    static int ByteToHexStr(const unsigned char *source, char *dest, quint32 sourceLen);
-
+    static int ByteArrayToHexStr(const unsigned char *source, char *dest, quint32 sourceLen);
+    static QString byteArrayToHexStr(const QByteArray &data);
 
 private:
     Ui::MainWindow *ui;
-private:
+public:
     bool user_serial_isopen;
 
     stReadDataThread readDataThreadTable[256];
@@ -83,6 +87,10 @@ private:
     User_about_dialog user_about_dialog;
     User_baud_rate_dialog user_baud_dialog;
     User_messagebox user_messagebox; 
+    QByteArray recv_buf;
+    bool isShow;                //是否显示数据
+    bool isHexShow;
+    bool isAutoClear;
 
 public:
     User_serial & mainwindow_get_user_serial(void);
@@ -94,6 +102,11 @@ public:
     void mainwindow_update_serial_port(void);
     void mainwindow_delete_QTreeWidgetItem(int currentIndex);
     void mainwindow_add_test_item(void);
+    void mainwindow_readDataThreadTable_get(stReadDataThread *arr[256]);
+    Ui::MainWindow * mainwindow_ui_get(void);
+    bool mainwindow_user_serial_isopen_get(void);
+    int mainwindow_itemCount_get(void);
+    void mainwindow_data_doWork(QByteArray & byteData);
 
 private slots:
     void mainwindow_itemDoubleClicked_slot(QTreeWidgetItem *item, int column);
@@ -111,13 +124,12 @@ private slots:
     void on_action_save_triggered();
     void on_action_open_triggered();
     void on_action_new_triggered();
+    void on_chStopDis_clicked(bool checked);
 
     // 处理线程执行的结果
-    void handleResults(const unsigned long long threadId)
-
-
+    void handleResults(const unsigned long long threadId);
 
 signals:
-    void readDataOperate(unsigned long long *); // 发送信号触发线程
+    void readDataOperate(MainWindow * self); // 发送信号触发线程
 };
 #endif // MAINWINDOW_H

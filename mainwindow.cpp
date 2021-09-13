@@ -54,6 +54,7 @@ MainWindow::MainWindow(QWidget *parent)
         this->mainwindow_load_cfg(path);
     }
 
+    this->isShow = false;
     memset(this->readDataThreadTable, 0, ARRAY_SIZE(this->readDataThreadTable) * sizeof(stReadDataThread));
 }
 
@@ -134,7 +135,7 @@ int MainWindow::HexStrToByte(const char *source, char *dest, quint32 sourceLen)
 }
 
 //字节流转换为十六进制字符串
-int MainWindow::ByteToHexStr(const unsigned char *source, char *dest, quint32 sourceLen)
+int MainWindow::ByteArrayToHexStr(const unsigned char *source, char *dest, quint32 sourceLen)
 {
     quint32 i;
     quint8 highByte = 0, lowByte = 0;
@@ -160,6 +161,26 @@ int MainWindow::ByteToHexStr(const unsigned char *source, char *dest, quint32 so
     dest[2 * sourceLen] = '\0';
     kLOG_DEBUG() << "2 * sourceLen" << 2 * sourceLen;
     return 2 * sourceLen;
+}
+
+QString MainWindow::byteArrayToHexStr(const QByteArray &data)
+{
+    QString temp = "";
+    QString hex = data.toHex();
+
+    for (int i = 0; i < hex.length(); i = i + 2) {
+        temp += hex.mid(i, 2) + " ";
+    }
+
+#if defined(Q_OS_WIN)
+
+#elif defined(Q_OS_LINUX)
+
+#elif defined(Q_OS_MAC)
+
+#endif
+
+    return temp.trimmed().toUpper();
 }
 
 
@@ -282,10 +303,28 @@ void MainWindow::mainwindow_dis_rxd_or_txd(QString dis_type, QByteArray disp_buf
     QString str;
     QDateTime time;
 
+    if(this->isShow) {
+        return;
+    }
+
+    QString buffer;
+    if (this->isHexShow) {
+        //buffer = MainWindow::byteArrayToHexStr(disp_buf);
+    } else {
+        //buffer = QUIHelper::byteArrayToAsciiStr(data);
+        //buffer = QString::fromLocal8Bit(disp_buf);
+    }
+    //不同类型不同颜色显示
+    if (dis_type == kDIS_TYPE_RX) {
+        ui->textBrowser->setTextColor(QColor("dodgerblue"));
+    } else if (dis_type == kDIS_TYPE_TX) {
+        ui->textBrowser->setTextColor(QColor("red"));
+    }
+
     //str = this->ui->textBrowser->toPlainText();
     time = QDateTime::currentDateTime();          //获取系统现在的时间
     str = time.toString("yyyy-MM-dd hh:mm:ss ddd") + dis_type + QString("%1").arg(disp_buf.size()) + "\r\n";         //设置显示格式
-    str += tr(disp_buf);
+    str += MainWindow::byteArrayToHexStr(disp_buf) + "(" + QString::fromLocal8Bit(disp_buf) + ")";
     str = str + "\r\n";
     //this->ui->textBrowser->clear();
     //this->ui->textBrowser->setText(str);
@@ -327,17 +366,183 @@ void MainWindow::mainwindow_add_test_item()
     this->ui->treeWidget->addTopLevelItem(item);
 }
 
+void MainWindow::mainwindow_readDataThreadTable_get(stReadDataThread *arr[256])
+{
+    for (unsigned long long tableId= 0; tableId < ARRAY_SIZE(this->readDataThreadTable); tableId++) {
+        arr[tableId] = &this->readDataThreadTable[tableId];
+    }
+}
+
+Ui::MainWindow * MainWindow::mainwindow_ui_get()
+{
+    return this->ui;
+}
+
+bool MainWindow::mainwindow_user_serial_isopen_get()
+{
+    return this->user_serial_isopen;
+}
+
+int MainWindow::mainwindow_itemCount_get()
+{
+    int item_count = 0;
+    QTreeWidgetItemIterator it(ui->treeWidget);
+    //遍历treeWidget,计算item数量
+    while (*it) {
+        item_count ++;
+        ++it;
+    }
+    kLOG_DEBUG() << "item_count:" << item_count;
+    return item_count;
+}
+
+void MainWindow::mainwindow_data_doWork(QByteArray &recvData)
+{
+    bool canSend = false;
+    char * dest = NULL;
+    int destDataLen = 0;
+    int item_count = 0;
+
+    QByteArray sendData;
+    QTreeWidgetItem * item = NULL;
+
+    this->mainwindow_dis_rxd_or_txd(kDIS_TYPE_RX, recvData);
+    item_count = this->mainwindow_itemCount_get();
+    for (int i = 0; i < item_count; i ++) {
+        item = this->ui->treeWidget->topLevelItem(i);
+        if(item->checkState(0) == Qt::Checked) {
+            QByteArray referData = item->text(1).toLatin1();
+            kLOG_DEBUG() << "referText:" << i << referData;
+#if defined(Q_OS_WIN)
+            kLOG_DEBUG() << "referText:" << i << MainWindow::byteArrayToHexStr(referData.replace('\n',"\r\n"));
+#elif defined(Q_OS_LINUX)
+            kLOG_DEBUG() << "referText:" << i << MainWindow::byteArrayToHexStr(referText);
+#elif defined(Q_OS_MAC)
+            kLOG_DEBUG() << "referText:" << i << MainWindow::byteArrayToHexStr(referText);
+#endif
+            if(item->checkState(1) == Qt::Checked) {//接收到数据需要是十六进制数据
+                destDataLen = recvData.size() * 2 + 2;
+                dest = (char *)calloc(destDataLen, sizeof (char));
+                if(!dest){
+                    kLOG_DEBUG() << "error: calloc dest";
+                    break;
+                }
+                memset(dest, 0, destDataLen);
+                destDataLen = 0;
+                destDataLen = MainWindow::HexStrToByte(referData.data(), dest, referData.size());
+                kLOG_DEBUG() << "destDataLen:" << destDataLen;
+                if(destDataLen > 0) {
+                    if(memcmp(recvData, dest, destDataLen) == 0) {
+                        if(dest) {
+                            free(dest);
+                            dest = NULL;
+                        }
+                        sendData = item->text(2).toLatin1();
+                        if(item->checkState(2) == Qt::Checked) {//应答数据使用十六进制发送
+                            destDataLen = sendData.size() * 2 + 2;
+                            dest = (char *)calloc(destDataLen, sizeof (char));
+                            if(!dest){
+                                kLOG_DEBUG() << "error: calloc dest";
+                                break;
+                            }
+                            memset(dest, 0, destDataLen);
+
+                            destDataLen = MainWindow::HexStrToByte(sendData.data(), dest, sendData.size());
+                            if(destDataLen > 0) {
+                                canSend = true;
+                                sendData.clear();
+                                sendData = QByteArray(dest);
+                            } else {
+                                this->user_messagebox.user_messagebox_about(QString("item %1 您输入的应答数据有误!").arg(i));
+                            }
+
+                            if(dest) {
+                                free(dest);
+                                dest = NULL;
+                            }
+                        } else {
+                            canSend = true;                            
+#if defined(Q_OS_WIN)
+                            sendData.replace('\n',"\r\n");
+#elif defined(Q_OS_LINUX)
+
+#elif defined(Q_OS_MAC)
+                            sendData.replace('\n',"\r");
+#endif
+                        }
+                        break;
+                    }else {
+                        kLOG_DEBUG() << "memcmp ....";
+                    }
+                } else {
+                    this->user_messagebox.user_messagebox_about(QString("item %1 您输入的参考数据有误!").arg(i));
+                }
+            } else {//接收到数据需要是字符转
+                if(referData == recvData){
+                    sendData.clear();
+                    sendData = item->text(2).toLatin1();
+                    if(item->checkState(2) == Qt::Checked) {//应答数据使用十六进制发送
+                        destDataLen = sendData.size() * 2 + 2;
+                        dest = (char *)calloc(destDataLen, sizeof (char));
+                        if(!dest){
+                            kLOG_DEBUG() << "error: calloc dest";
+                            break;
+                        }
+                        memset(dest, 0, destDataLen);
+                        destDataLen = MainWindow::HexStrToByte(sendData.data(), dest, sendData.size());
+                        if((destDataLen > 0)) {
+                            canSend = true;
+                            sendData.clear();
+                            sendData = QByteArray(dest);
+                        } else {
+                            this->user_messagebox.user_messagebox_about(QString("item %1 您输入的应答数据有误!").arg(i));
+                        }
+                    } else {
+                        canSend = true;
+#if defined(Q_OS_WIN)
+                        sendData.replace('\n',"\r\n");
+#elif defined(Q_OS_LINUX)
+
+#elif defined(Q_OS_MAC)
+                        sendData.replace('\n',"\r");
+#endif
+                    }
+                    break;
+                }
+            }
+        }
+    }
+
+    if(canSend){
+        this->mainwindow_dis_rxd_or_txd(kDIS_TYPE_TX, sendData);
+        kLOG_DEBUG() << "sendData.length:" << sendData.length() << "sendData.size:" << sendData.size() << "constData:" << sendData.constData();
+        this->user_serial.user_serial_wirte(sendData.constData(), sendData.size());
+    }
+}
 
 
-void Worker::mainwindow_readDataDoworkSlot(unsigned long long * parameter)
+
+void Worker::mainwindow_readDataDoworkSlot(MainWindow * window)
 {
     kLOG_DEBUG() << "mainwindow_readDataDoworkSlot";
     kLOG_DEBUG() << "receive the execute signal---------------------------------";
     kLOG_DEBUG() << "current thread ID:"<<QThread::currentThreadId();
-    kLOG_DEBUG() << "readDataThreadTable:" << parameter;
-    *parameter = (unsigned long long)QThread::currentThreadId();
-    QThread::sleep(5);
+
+    unsigned long long tableId = 0;
+    QByteArray recv_buf;
+    stReadDataThread * pReadDataThreadTable[256] = {0};
+
+
+    recv_buf = window->user_serial.user_serial_read();
+    kLOG_DEBUG() << "recv_buf:" << recv_buf << "size:" << recv_buf.size();
+    window->mainwindow_data_doWork(recv_buf);
+
+    window->mainwindow_readDataThreadTable_get(pReadDataThreadTable);
+    for (tableId = 0; tableId < ARRAY_SIZE(pReadDataThreadTable); tableId++) {
+        if(pReadDataThreadTable[tableId]->id == 0) break;
+    }
     kLOG_DEBUG() << "finish the work and sent the resultReady signal\n";
+    pReadDataThreadTable[tableId]->id = (unsigned long long)QThread::currentThreadId();
     emit readDataResultReadySignal((unsigned long long)(QThread::currentThreadId()));
 }
 
@@ -454,186 +659,10 @@ void MainWindow::on_button_send_clicked()
 void MainWindow::mainwindow_readData_slot()
 {
     kLOG_DEBUG() << "*********readData**********";
-    int i = 0;
-    int item_count = 0;
-    QString output_str;
-    QByteArray recv_buf;
-    QByteArray disp_buf;
-    QString str;
-    QString textEdit_t_str;
-    QByteArray byteArry;
-    unsigned long long tableId = 0;
-
-    QTreeWidgetItem * item = NULL;
-    int data_len = 0;
-    char * dest = NULL;
-    bool a_send = false;
-    char * send_buf = NULL;
-    int send_len = 0;
-    bool is_hex = false;
-
-    QTreeWidgetItemIterator it(ui->treeWidget);
-    if(this->user_serial_isopen == false){
-        return;
-    }
-
-    //遍历treeWidget,计算item数量
-    while (*it) {
-        item_count ++;
-        ++it;
-    }
-
-
-    for ( tableId= 0; tableId < ARRAY_SIZE(this->readDataThreadTable); tableId++) {
-        if(this->readDataThreadTable[tableId].id == 0) break;
-    }
-
-    Worker * worker = NULL;
-    this->readDataThreadTable[tableId].worker = new Worker;
-    worker = this->readDataThreadTable[tableId].worker;
-    this->readDataThreadTable[tableId].readDataThread = new QThread;
-    worker->moveToThread(this->readDataThreadTable[tableId].readDataThread);
-    //operate信号发射后启动线程工作
-    connect(this, SIGNAL(readDataOperate(unsigned long long *)), worker, SLOT(mainwindow_readDataDoworkSlot(unsigned long long *)));
-    //该线程结束时销毁
-    connect(this->readDataThreadTable[tableId].readDataThread, &QThread::finished, worker, &QThread::deleteLater);
-    //线程结束后发送信号，对结果进行处理
-    connect(worker, SIGNAL(readDataResultReadySignal(unsigned long long)), this, SLOT(handleResults(unsigned long long)));
-    //启动线程
-    this->readDataThreadTable[tableId].readDataThread->start();
-    emit readDataOperate(&this->readDataThreadTable[tableId].id);
-
-
-    kLOG_DEBUG() << "item_count:" << item_count;
-    recv_buf = this->user_serial.user_serial_read();
-    kLOG_DEBUG() << "recv_buf:" << recv_buf << "size:" << recv_buf.size();
-    for (i = 0; i < item_count; i ++) {
-        item = this->ui->treeWidget->topLevelItem(i);
-        if(item->checkState(0) == Qt::Checked) {
-            byteArry = item->text(1).toLatin1();
-            kLOG_DEBUG() << "接收数据:" << byteArry << "size:" << byteArry.size();
-            if(byteArry.size() <= 0) {
-                continue;
-            }
-            if(item->checkState(1) == Qt::Checked) {//十六进制字符串，转成十六进制再比较
-                data_len = 0;
-                dest = (char *)calloc(recv_buf.size() * 2 + 2, sizeof (char));
-                if(dest ==NULL){
-                    kLOG_DEBUG() << "error: calloc dest";
-                    break;
-                }
-                //kLOG_DEBUG() << "recv_buf.constData()" << recv_buf.constData();
-                //disp_buf = recv_buf.constData();
-                data_len = ByteToHexStr((unsigned char*)recv_buf.constData(), dest, recv_buf.size());
-                disp_buf = dest;
-                kLOG_DEBUG() << "disp_buf.constData()" << disp_buf.constData();
-                int len =  disp_buf.length();
-                for (int i=2; i<len-1; i+=3,len++) {
-                    disp_buf.insert(i," ");
-                    //kLOG_DEBUG() << i << str ;
-                }
-                memset(dest, 0, data_len);
-
-                data_len = MainWindow::HexStrToByte(byteArry.data(), dest, byteArry.size());
-                kLOG_DEBUG() << "dest:";
-                for (int j= 0; j < data_len; j++) {
-                    kLOG_DEBUG() << dest[j];
-                }
-                kLOG_DEBUG() << "\r\n";
-
-                if((data_len > 0)) {
-                    if(memcmp(recv_buf, dest, recv_buf.size()) == 0) {
-                        byteArry.clear();
-                        byteArry = item->text(2).toLatin1();
-                        if(item->checkState(2) == Qt::Checked) {//应答数据使用十六进制发送
-                            if(dest) {
-                                free(dest);
-                                dest = NULL;
-                            }
-                            dest = (char *)calloc(byteArry.size() * 2 + 2, sizeof (char));
-                            if(dest ==NULL) {
-                                kLOG_DEBUG() << "error: calloc dest";
-                                break;
-                            }
-
-                            data_len = MainWindow::HexStrToByte(byteArry.data(), dest, byteArry.size());
-                            if((data_len > 0)) {
-                                is_hex = a_send = true;
-                                send_buf = dest;
-                                send_len = data_len;
-                            } else {
-                                this->user_messagebox.user_messagebox_about(QString("item %1 您输入的应答数据有误!").arg(i));
-                            }
-                        } else {
-                            a_send = true;
-                            send_buf = byteArry.data();
-                            send_len = byteArry.size();
-                        }
-                        break;
-                    }
-                } else {
-                    this->user_messagebox.user_messagebox_about(QString("item %1 您输入的接收数据有误!").arg(i));
-                }
-            } else {
-                disp_buf = recv_buf;
-                if(recv_buf == byteArry) {
-                    byteArry.clear();
-                    byteArry = item->text(2).toLatin1();
-                    if(item->checkState(2) == Qt::Checked) {//应答数据使用十六进制发送
-                        if(dest) {
-                            free(dest);
-                            dest = NULL;
-                        }
-                        dest = (char *)calloc(byteArry.size() + 2, sizeof (char));
-                        if(dest ==NULL) {
-                            kLOG_DEBUG() << "error: calloc dest";
-                            break;
-                        }
-
-                        data_len = MainWindow::HexStrToByte(byteArry.data(), dest, byteArry.size());
-                        if((data_len > 0)) {
-                            is_hex = a_send = true;
-                            send_buf = dest;
-                            send_len = data_len;
-                        }else {
-                            this->user_messagebox.user_messagebox_about(QString("item %1 您输入的应答数据有误!").arg(i));
-                        }
-                    }else {
-                        a_send = true;
-                        send_buf = byteArry.data();
-                        send_len = byteArry.size();
-                    }
-                    break;
-                }
-            }
-        }
-    }
-    //显示
-    this->mainwindow_dis_rxd_or_txd(" --> rx len:", disp_buf);
-    if(a_send == true) {
-        char * is_hex_dest = (char *)calloc(send_len * 2 + 2, sizeof (char));
-        this->user_serial.user_serial_wirte(send_buf, send_len);
-        disp_buf = send_buf;
-        if(is_hex == true) {
-            if(is_hex_dest == NULL) {
-                kLOG_DEBUG() << "error: calloc dest";
-                return ;
-            }
-            //kLOG_DEBUG() << "recv_buf.constData()" << recv_buf.constData();
-            //disp_buf = recv_buf.constData();
-            ByteToHexStr((unsigned char*)send_buf, is_hex_dest, send_len);
-            disp_buf = is_hex_dest;
-            //kLOG_DEBUG() << "应答数据" << disp_buf.constData();
-            int len =  disp_buf.length();
-            for (int i=2; i<len-1; i+=3,len++) {
-                disp_buf.insert(i," ");
-                //kLOG_DEBUG() << i << str ;
-            }
-        }
-        this->mainwindow_dis_rxd_or_txd(" --> tx len:", disp_buf);
-        if(is_hex_dest)free(is_hex_dest);
-    }
-    if(dest)free(dest);
+    QByteArray recvData;
+    recvData = this->user_serial.user_serial_read();
+    kLOG_DEBUG() << "recvData:" << recvData << "size:" << recvData.size();
+    this->mainwindow_data_doWork(recvData);
 }
 
 
@@ -862,3 +891,8 @@ void MainWindow::handleResults(const unsigned long long threadId)
 }
 
 
+void MainWindow::on_chStopDis_clicked(bool checked)
+{
+    kLOG_DEBUG() << "on chStopDis clicked:" << checked;
+    this->isShow = checked;
+}

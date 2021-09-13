@@ -79,6 +79,7 @@ int User_serial::user_serial_wirte(const char * send_buf, quint64 buf_len)
 //    kLOG_DEBUG() << this->stopBits();
 //    kLOG_DEBUG() << "parity:";
 //    kLOG_DEBUG() << this->parity();
+//    kLOG_DEBUG() << "send_buf:" << send_buf;
     this->write(send_buf, buf_len);
     return 0;
 }
