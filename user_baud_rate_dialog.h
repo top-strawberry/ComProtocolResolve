@@ -17,6 +17,12 @@ class User_baud_rate_dialog : public QDialog
 public:
     explicit User_baud_rate_dialog(QWidget *parent = nullptr);
     ~User_baud_rate_dialog();
+private:
+    bool isOpen;
+
+public:
+    bool isUserBaudRateDialogOpen(void);
+    void  setUserBaudRateDialogOpen(bool status);
 
 private slots:
     void on_pushButton_ok_clicked();

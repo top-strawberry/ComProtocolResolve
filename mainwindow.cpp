@@ -9,7 +9,7 @@ MainWindow::MainWindow(QWidget *parent)
     , user_serial()
 {
     ui->setupUi(this);
-    this->setWindowTitle("ComProtocolResolve (by stawberry)");
+    this->setWindowTitle("串口自动应答助手 (作者:蒋钦亮 WX:luoYuQinXia)");
     this->setFixedWidth(1024);
     this->setFixedHeight(800);
     this->mainwindow_update_serial_port();
@@ -674,8 +674,8 @@ void MainWindow::on_pushButton_add_clicked()
     while (*it) {
         item_count ++;
         ++it;
-        if(item_count >= 10) {
-            this->user_messagebox.user_messagebox_about(QString("配置item,限制总数量不超过10条!"));
+        if(item_count >= kQTreeWidgetItemIteratorSize) {
+            this->user_messagebox.user_messagebox_about(QString("配置item,限制总数量不超过%1条!").arg(kQTreeWidgetItemIteratorSize));
             return;
         }
     }
@@ -767,6 +767,11 @@ void MainWindow::mainwindow_qcombobox_activated_slot(int index)
         user_baud_rate_dialog_ui = this->user_baud_dialog.user_baud_rate_dialog_get_ui();
         user_baud_rate_dialog_ui->lineEdit->clear();
 
+        if(this->user_baud_dialog.isUserBaudRateDialogOpen() == true){
+            return;
+        }
+        this->user_baud_dialog.setUserBaudRateDialogOpen(true);
+
         this->user_baud_dialog.setWindowFlags(this->windowFlags() | Qt::WindowStaysOnTopHint);
         this->user_baud_dialog.setWindowFlags(this->windowFlags());
         this->user_baud_dialog.show();
@@ -779,6 +784,7 @@ void MainWindow::mainwindow_qcombobox_activated_slot(int index)
             kLOG_DEBUG()<<"reject";
         }
         this->ui->comboBox_baud_rate->setCurrentIndex(0);
+        this->user_baud_dialog.setUserBaudRateDialogOpen(false);
     }
 
 }

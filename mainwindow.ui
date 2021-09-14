@@ -82,7 +82,11 @@
     </property>
     <layout class="QVBoxLayout" name="verticalLayout_7">
      <item>
-      <widget class="QTextBrowser" name="textBrowser"/>
+      <widget class="QTextBrowser" name="textBrowser">
+       <property name="focusPolicy">
+        <enum>Qt::WheelFocus</enum>
+       </property>
+      </widget>
      </item>
      <item>
       <spacer name="verticalSpacer">
@@ -195,6 +199,9 @@
          </item>
          <item>
           <widget class="QComboBox" name="comboBox_baud_rate">
+           <property name="focusPolicy">
+            <enum>Qt::NoFocus</enum>
+           </property>
            <property name="editable">
             <bool>false</bool>
            </property>

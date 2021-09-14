@@ -22,10 +22,11 @@
 #include "user_messagebox.h"
 
 
-#define kCFG_JSON_ROOT_PATH "config/"
-#define kCFG_JSON_PATH "cfg.json"
-#define  kDIS_TYPE_TX    " --> tx len:"
-#define  kDIS_TYPE_RX    " --> rx len:"
+#define kCFG_JSON_ROOT_PATH             "config/"
+#define kCFG_JSON_PATH                  "cfg.json"
+#define  kDIS_TYPE_TX                   " --> tx len:"
+#define  kDIS_TYPE_RX                   " --> rx len:"
+#define  kQTreeWidgetItemIteratorSize   20
 
 typedef int (*cfg_opt)(const QString path);
 
