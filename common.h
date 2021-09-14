@@ -45,4 +45,6 @@
 
 #define ARRAY_SIZE(array) sizeof(array) / sizeof(array[0])
 
+extern void memDump(const uint8_t *array, uint32_t size);
+
 #endif // COMMON_H

@@ -128,8 +128,9 @@ int MainWindow::HexStrToByte(const char *source, char *dest, quint32 sourceLen)
             i++;
             break;
         }
-        dest[j++] = (highByte << 4) | lowByte;
-        highByte = 0;lowByte=0;
+        dest[j] = (highByte << 4) | lowByte;
+
+        highByte = 0;lowByte=0;j++;
     }
     return j;
 }
@@ -399,7 +400,8 @@ int MainWindow::mainwindow_itemCount_get()
 void MainWindow::mainwindow_data_doWork(QByteArray &recvData)
 {
     bool canSend = false;
-    char * dest = NULL;
+    char * dest1 = NULL;
+    char * dest2 = NULL;
     int destDataLen = 0;
     int item_count = 0;
 
@@ -422,46 +424,41 @@ void MainWindow::mainwindow_data_doWork(QByteArray &recvData)
 #endif
             if(item->checkState(1) == Qt::Checked) {//接收到数据需要是十六进制数据
                 destDataLen = recvData.size() * 2 + 2;
-                dest = (char *)calloc(destDataLen, sizeof (char));
-                if(!dest){
+                dest1 = (char *)calloc(destDataLen, sizeof (char));
+                if(!dest1){
                     kLOG_DEBUG() << "error: calloc dest";
                     break;
                 }
-                memset(dest, 0, destDataLen);
+                memset(dest1, 0, destDataLen);
                 destDataLen = 0;
-                destDataLen = MainWindow::HexStrToByte(referData.data(), dest, referData.size());
+                destDataLen = MainWindow::HexStrToByte(referData.data(), dest1, referData.size());
                 kLOG_DEBUG() << "destDataLen:" << destDataLen;
                 if(destDataLen > 0) {
-                    if(memcmp(recvData, dest, destDataLen) == 0) {
-                        if(dest) {
-                            free(dest);
-                            dest = NULL;
-                        }
+                    if(memcmp(recvData, dest1, destDataLen) == 0) {
                         sendData = item->text(2).toLatin1();
                         if(item->checkState(2) == Qt::Checked) {//应答数据使用十六进制发送
                             destDataLen = sendData.size() * 2 + 2;
-                            dest = (char *)calloc(destDataLen, sizeof (char));
-                            if(!dest){
+                            dest2 = (char *)calloc(destDataLen, sizeof (char));
+                            if(!dest2){
                                 kLOG_DEBUG() << "error: calloc dest";
                                 break;
                             }
-                            memset(dest, 0, destDataLen);
-
-                            destDataLen = MainWindow::HexStrToByte(sendData.data(), dest, sendData.size());
+                            memset(dest2, 0, destDataLen);
+                            destDataLen = MainWindow::HexStrToByte(sendData.data(), dest2, sendData.size());
                             if(destDataLen > 0) {
                                 canSend = true;
                                 sendData.clear();
-                                sendData = QByteArray(dest);
+                                sendData = QByteArray(dest2, destDataLen);
                             } else {
                                 this->user_messagebox.user_messagebox_about(QString("item %1 您输入的应答数据有误!").arg(i));
                             }
 
-                            if(dest) {
-                                free(dest);
-                                dest = NULL;
+                            if(dest2) {
+                                free(dest2);
+                                dest2 = NULL;
                             }
                         } else {
-                            canSend = true;                            
+                            canSend = true;
 #if defined(Q_OS_WIN)
                             sendData.replace('\n',"\r\n");
 #elif defined(Q_OS_LINUX)
@@ -474,8 +471,14 @@ void MainWindow::mainwindow_data_doWork(QByteArray &recvData)
                     }else {
                         kLOG_DEBUG() << "memcmp ....";
                     }
+
                 } else {
                     this->user_messagebox.user_messagebox_about(QString("item %1 您输入的参考数据有误!").arg(i));
+                }
+
+                if(dest1) {
+                    free(dest1);
+                    dest1 = NULL;
                 }
             } else {//接收到数据需要是字符转
                 if(referData == recvData){
@@ -483,19 +486,23 @@ void MainWindow::mainwindow_data_doWork(QByteArray &recvData)
                     sendData = item->text(2).toLatin1();
                     if(item->checkState(2) == Qt::Checked) {//应答数据使用十六进制发送
                         destDataLen = sendData.size() * 2 + 2;
-                        dest = (char *)calloc(destDataLen, sizeof (char));
-                        if(!dest){
+                        dest2 = (char *)calloc(destDataLen, sizeof (char));
+                        if(!dest2){
                             kLOG_DEBUG() << "error: calloc dest";
                             break;
                         }
-                        memset(dest, 0, destDataLen);
-                        destDataLen = MainWindow::HexStrToByte(sendData.data(), dest, sendData.size());
+                        memset(dest2, 0, destDataLen);
+                        destDataLen = MainWindow::HexStrToByte(sendData.data(), dest2, sendData.size());
                         if((destDataLen > 0)) {
                             canSend = true;
                             sendData.clear();
-                            sendData = QByteArray(dest);
+                            sendData = QByteArray(dest2, destDataLen);
                         } else {
                             this->user_messagebox.user_messagebox_about(QString("item %1 您输入的应答数据有误!").arg(i));
+                        }
+                        if(dest2) {
+                            free(dest2);
+                            dest2 = NULL;
                         }
                     } else {
                         canSend = true;
