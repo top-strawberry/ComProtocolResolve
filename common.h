@@ -3,7 +3,7 @@
 
 #include <QDebug>
 /* Exported macro ------------------------------------------------------------*/
-#define PRINTF 1
+#define PRINTF 0
 
 #if PRINTF
     #define INFO_PRINTF 1
