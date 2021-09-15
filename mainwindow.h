@@ -107,7 +107,7 @@ public:
     Ui::MainWindow * mainwindow_ui_get(void);
     bool mainwindow_user_serial_isopen_get(void);
     int mainwindow_itemCount_get(void);
-    void mainwindow_data_doWork(QByteArray & byteData);
+    void mainwindow_data_doWork(QByteArray byteData);
 
 private slots:
     void mainwindow_itemDoubleClicked_slot(QTreeWidgetItem *item, int column);
