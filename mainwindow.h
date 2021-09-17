@@ -50,9 +50,16 @@ public slots:
     // doWork定义了线程要执行的操作
     void mainwindow_readDataDoworkSlot(MainWindow * mainWindow);
 
+    void mainwindow_sendDataDeleteLater(Worker * self);
+    // doWork定义了线程要执行的操作
+    void mainwindow_sendDataDoworkSlot(MainWindow * mainWindow);
+
 // 线程完成工作时发送的信号
 signals:
      void readDataResultReadySignal(const unsigned long long threadId);// 线程完成工作时发送的信号
+     void sendDataResultReadySignal(const unsigned long long threadId);// 线程完成工作时发送的信号
+
+     void canSendSignal(QString dis_type, QByteArray buf);//
 };
 
 
@@ -60,6 +67,7 @@ typedef struct {
     unsigned long long id;
     Worker *worker;
     QThread *readDataThread;
+    QThread *sendDataThread;
 } stReadDataThread;
 
 class MainWindow : public QMainWindow
@@ -81,6 +89,7 @@ public:
     bool user_serial_isopen;
 
     stReadDataThread readDataThreadTable[256];
+    stReadDataThread sendDataThreadTable[256];
     User_serial user_serial;
     User_json user_json;
     User_dialog user_dialog;
@@ -129,8 +138,12 @@ private slots:
 
     // 处理线程执行的结果
     void handleResults(const unsigned long long threadId);
+    void handleSendResults(const unsigned long long threadId);
+
+    void canSendSlot(QString dis_type, QByteArray buf);//
 
 signals:
     void readDataOperate(MainWindow * self); // 发送信号触发线程
+    void sendDataOperate(MainWindow * self); // 发送信号触发线程
 };
 #endif // MAINWINDOW_H

@@ -56,6 +56,23 @@ MainWindow::MainWindow(QWidget *parent)
 
     this->isShow = false;
     memset(this->readDataThreadTable, 0, ARRAY_SIZE(this->readDataThreadTable) * sizeof(stReadDataThread));
+    memset(this->sendDataThreadTable, 0, ARRAY_SIZE(this->sendDataThreadTable) * sizeof(stReadDataThread));
+
+    Worker * worker = NULL;
+    this->sendDataThreadTable[0].worker = new Worker;
+    worker = this->sendDataThreadTable[0].worker;
+    this->sendDataThreadTable[0].sendDataThread = new QThread;
+    worker->moveToThread(this->sendDataThreadTable[0].sendDataThread);
+    //operate信号发射后启动线程工作
+    connect(this, SIGNAL(sendDataOperate(MainWindow *)), worker, SLOT(mainwindow_sendDataDoworkSlot(MainWindow *)));
+    //该线程结束时销毁
+    connect(this->sendDataThreadTable[0].sendDataThread, &QThread::finished, worker, &QThread::deleteLater);
+    //线程结束后发送信号，对结果进行处理
+    connect(worker, SIGNAL(sendDataResultReadySignal(unsigned long long)), this, SLOT(handleSendResults(unsigned long long)));
+    //启动线程
+    this->sendDataThreadTable[0].sendDataThread->start();
+
+    connect(worker, SIGNAL(canSendSignal(QString , QByteArray )), this, SLOT(canSendSlot(QString , QByteArray)));
 }
 
 
@@ -550,6 +567,85 @@ void Worker::mainwindow_readDataDoworkSlot(MainWindow * window)
     emit readDataResultReadySignal((unsigned long long)(QThread::currentThreadId()));
 }
 
+void Worker::mainwindow_sendDataDoworkSlot(MainWindow *window)
+{
+    int i = 0;
+    int item_count = 0;
+    bool canSend = false;
+    QString output_str;
+    Ui::MainWindow * ui;
+    QByteArray sendData;
+    char * dest1 = NULL;
+    char * dest2 = NULL;
+    int destDataLen = 0;
+
+    kLOG_DEBUG() << "mainwindow_sendDataDoworkSlot";
+    kLOG_DEBUG() << "receive the execute signal---------------------------------";
+    kLOG_DEBUG() << "current thread ID:"<<QThread::currentThreadId();
+
+    item_count = window->mainwindow_itemCount_get();
+    ui = window->mainwindow_ui_get();
+    for (i = 0; i < item_count; i++) {
+        QTreeWidgetItem * item = ui->treeWidget->topLevelItem(i);
+        if(item->checkState(0) == Qt::Checked) {
+            sendData.clear();
+            sendData = item->text(2).toLatin1();
+            if(item->checkState(2) == Qt::Checked) {//应答数据使用十六进制发送
+                destDataLen = sendData.size() * 2 + 2;
+                dest2 = (char *)calloc(destDataLen, sizeof (char));
+                if(!dest2){
+                    kLOG_DEBUG() << "error: calloc dest";
+                    break;
+                }
+                memset(dest2, 0, destDataLen);
+                destDataLen = MainWindow::HexStrToByte(sendData.data(), dest2, sendData.size());
+                if((destDataLen > 0)) {
+                    canSend = true;
+                    sendData.clear();
+                    sendData = QByteArray(dest2, destDataLen);
+                } else {
+                    window->user_messagebox.user_messagebox_about(QString("item %1 您输入的应答数据有误!").arg(i));
+                }
+            }else {
+                canSend = true;
+#if defined(Q_OS_WIN)
+                sendData.replace('\n',"\r\n");
+#elif defined(Q_OS_LINUX)
+
+#elif defined(Q_OS_MAC)
+                sendData.replace('\n',"\r");
+#endif
+            }
+        }
+
+        QThread::sleep(1);
+        if(canSend){
+            canSend = false;
+            emit this->canSendSignal(kDIS_TYPE_TX, sendData);//
+        }
+        if(dest1) {
+            free(dest1);
+            dest1 = NULL;
+        }
+        if(dest2) {
+            free(dest2);
+            dest2 = NULL;
+        }
+    }
+
+    emit sendDataResultReadySignal((unsigned long long)(QThread::currentThreadId()));
+}
+
+void Worker::mainwindow_sendDataDeleteLater(Worker *self)
+{
+    if(self) {
+        kLOG_DEBUG() << "mainwindow_sendDataDeleteLater";
+        delete self;
+    }
+}
+
+
+
 void Worker::mainwindow_readDataDeleteLater(Worker * self)
 {
     if(self) {
@@ -616,46 +712,12 @@ void MainWindow::on_button_clear_clicked()
 
 void MainWindow::on_button_send_clicked()
 {
-    int i = 0;
-    int item_count = 0;
-    QString output_str;
     QTreeWidgetItemIterator it(ui->treeWidget);
     if(this->user_serial_isopen == false){
         return;
     }
-    //遍历treeWidget,计算item数量
-    while (*it) {
-        item_count ++;
-        ++it;
-    }
-    kLOG_DEBUG() << "item_count:" << item_count;
-    for (i = 0; i < item_count; i ++) {
-        QTreeWidgetItem * item = this->ui->treeWidget->topLevelItem(i);
-        if(item->checkState(0) == Qt::Checked) {
-            output_str = item->text(2);
-            kLOG_DEBUG() << output_str.toLatin1().data();
-            if(item->checkState(2) == Qt::Checked) {//十六进制字符串，转成十六进制再发送
-                int data_len = 0;
-                QByteArray byteArry = output_str.toLatin1();
-                char *dest = (char *)calloc(byteArry.size() * 2 + 2, sizeof (char));
-                if(dest ==NULL) {
-                    kLOG_DEBUG() << "error: calloc dest";
-                    break;
-                }
-                kLOG_DEBUG() << "byteArry:" << byteArry << "size:" << byteArry.size();
-                data_len = MainWindow::HexStrToByte(output_str.toLatin1().data(), dest, byteArry.size());
-                if((data_len > 0)) {
-                    this->user_serial.user_serial_wirte(dest, data_len);
-                }else {
-                    this->user_messagebox.user_messagebox_about(QString("item %1 您输入的应答数据有误!").arg(i));
-                }
-                free(dest);
-            }else{
-                this->user_serial.user_serial_wirte(output_str.toLatin1().data(), output_str.size());
-            }
-            QThread::sleep(1);
-        }
-    }
+
+    emit sendDataOperate(this);
 }
 
 
@@ -900,6 +962,20 @@ void MainWindow::handleResults(const unsigned long long threadId)
             break;
         }
     }
+}
+
+void MainWindow::handleSendResults(const unsigned long long threadId)
+{
+    kLOG_DEBUG()<<"receive the resultReady signal---------------------------------";
+    kLOG_DEBUG()<<"current thread ID:"<<QThread::currentThreadId()<<'\n';
+    kLOG_DEBUG()<<"the last result is:"<<threadId;
+}
+
+void MainWindow::canSendSlot(QString dis_type, QByteArray buf)
+{
+    this->mainwindow_dis_rxd_or_txd(dis_type, buf);
+    kLOG_DEBUG() << "sendData.length:" << buf.length() << "sendData.size:" << buf.size() << "constData:" << buf.constData();
+    this->user_serial.user_serial_wirte(buf.constData(), buf.size());
 }
 
 
